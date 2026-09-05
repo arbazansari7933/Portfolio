@@ -1,22 +1,38 @@
-import { head } from "@vercel/blob";
+import { put } from "@vercel/blob";
 
 export default async function handler(req, res) {
-  try {
-    const blobInfo = await head("resume.pdf");
-    const response = await fetch(blobInfo.url, {
-      headers: {
-        Authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}`,
-      },
-    });
-    const arrayBuffer = await response.arrayBuffer();
+  if (req.method !== "POST") {
+    res.status(405).json({ error: "Method not allowed" });
+    return;
+  }
 
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      'attachment; filename="Arbaz_Ansari_Resume.pdf"'
-    );
-    res.status(200).send(Buffer.from(arrayBuffer));
+  const secret = req.headers["x-upload-secret"];
+  if (!secret || secret !== process.env.RESUME_UPLOAD_SECRET) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  try {
+    const chunks = [];
+    for await (const chunk of req) {
+      chunks.push(chunk);
+    }
+    const buffer = Buffer.concat(chunks);
+
+    if (buffer.length === 0) {
+      res.status(400).json({ error: "No file data received" });
+      return;
+    }
+
+    const blob = await put("resume.pdf", buffer, {
+      access: "private",
+      addRandomSuffix: false,
+      allowOverwrite: true,
+      contentType: "application/pdf",
+    });
+
+    res.status(200).json({ success: true, url: blob.url });
   } catch (err) {
-    res.status(404).json({ error: "Resume not found. Upload one first." });
+    res.status(500).json({ error: err.message });
   }
 }
