@@ -11,6 +11,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
+//import resume from "../public/resume.pdf";
 
 const SKILL_GROUPS = [
   { name: "Language", items: ["Java", "JavaScript (ES6+)", "C++"] },
@@ -42,8 +43,8 @@ const PROJECTS = [
     name: "KGN Collection",
     tag: "Live",
     accent: "emerald",
-    github: "https://github.com/arbazansari7933",
-    live: "#",
+    github: "https://github.com/arbazansari7933/customer-ledger",
+    live: "https://customer-ledger-chi.vercel.app/login",
     desc: "Full-stack POS & inventory system (MERN) for my father's retail shop — QR-based billing and automated inventory cut checkout time by ~85%. 33 REST APIs with JWT auth and role-based access (Owner/Employee/Demo), tracking ₹79.8K+ across 35 live customer accounts and 217+ product SKUs.",
     stack: ["React.js", "Node.js", "Express.js", "MongoDB"],
     bars: [85, 60, 15],
@@ -52,7 +53,7 @@ const PROJECTS = [
     name: "SentinelTicket",
     tag: "Deployed",
     accent: "violet",
-    github: "https://github.com/arbazansari7933",
+    github: "https://github.com/arbazansari7933/sentinel-ticket",
     desc: "A layered REST API (Routes → Controllers → Services → Repositories) for a movie ticket booking platform. Two-tier concurrency control — Redis distributed locks plus PostgreSQL SELECT FOR UPDATE inside ACID transactions — across a hold → payment → confirm workflow to stop double-booked seats. Dockerized and deployed to AWS EC2 with a GitHub Actions CI/CD pipeline.",
     stack: ["Node.js", "Express.js", "PostgreSQL", "Redis", "Docker", "AWS"],
     bars: [88, 12],
@@ -61,17 +62,17 @@ const PROJECTS = [
     name: "CryptoSim",
     tag: "Live",
     accent: "sky",
-    github: "https://github.com/arbazansari7933",
-    live: "#",
+    github: "https://github.com/arbazansari7933/CryptoSim",
+    live: "https://cryptosim-gamma.vercel.app/",
     desc: "Real-time MERN crypto trading simulator with live market data for 6 cryptocurrencies. Market and limit orders execute through MongoDB multi-document transactions for atomic trades, with a WebSocket engine streaming Coinbase prices and JWT-secured trading, portfolio, and leaderboard modules.",
     stack: ["React", "Node.js", "Express", "MongoDB", "Socket.IO"],
     bars: [70, 10],
   },
   {
-    name: "Multi-Vendor E-Commerce Application",
+    name: "MultiVendor (E-Commerce Application)",
     tag: "Team Project",
     accent: "amber",
-    github: "https://github.com/arbazansari7933",
+    github: "https://github.com/Jawed-akhtar1/Multivendor_ecommercee",
     desc: "Collaborated as part of a team to containerize an existing multi-vendor e-commerce application using Docker and prepare it for cloud deployment. Handled application deployment on Render and configured the cloud-hosted MySQL database on Aiven, including environment variables and database connectivity.",
     stack: ["Docker", "Spring Boot", "Render", "Aiven"],
     bars: [],
@@ -204,7 +205,7 @@ function SkillInstaller() {
 
   return (
     <div ref={sectionRef} className="border border-zinc-800 bg-zinc-950 rounded-lg overflow-hidden">
-      <TermBar path="~/arbaz/stack" />
+      <TermBar path="~/stack" />
       <div className="p-5 sm:p-6 font-mono text-sm">
         <div className="text-zinc-600 mb-4">$ npm install skills</div>
         <div className="flex flex-col gap-1.5">
@@ -212,23 +213,20 @@ function SkillInstaller() {
             step.type === "header" ? (
               <div
                 key={`h-${step.label}`}
-                className={`text-base sm:text-lg font-bold text-white transition-opacity duration-200 ${
-                  status[i] === "pending" ? "opacity-0" : "opacity-100"
-                } ${i === 0 ? "mt-0" : "mt-4"} mb-1`}
+                className={`text-base sm:text-lg font-bold text-white transition-opacity duration-200 ${status[i] === "pending" ? "opacity-0" : "opacity-100"
+                  } ${i === 0 ? "mt-0" : "mt-4"} mb-1`}
               >
                 {step.label}
               </div>
             ) : (
               <div
                 key={`i-${step.label}`}
-                className={`flex items-center gap-3 pl-1 transition-opacity duration-200 ${
-                  status[i] === "pending" ? "opacity-0" : "opacity-100"
-                }`}
+                className={`flex items-center gap-3 pl-1 transition-opacity duration-200 ${status[i] === "pending" ? "opacity-0" : "opacity-100"
+                  }`}
               >
                 <span
-                  className={`w-4 text-center ${
-                    status[i] === "done" ? "text-emerald-400" : "text-amber-400"
-                  }`}
+                  className={`w-4 text-center ${status[i] === "done" ? "text-emerald-400" : "text-amber-400"
+                    }`}
                 >
                   {status[i] === "done" ? "✓" : status[i] === "loading" ? SPIN_FRAMES[frame] : ""}
                 </span>
@@ -246,6 +244,84 @@ function SkillInstaller() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function ResumeAdmin() {
+  const [file, setFile] = useState(null);
+  const [secret, setSecret] = useState("");
+  const [status, setStatus] = useState("idle"); // idle | uploading | success | error
+  const [message, setMessage] = useState("");
+
+  async function handleUpload() {
+    if (!file) {
+      setMessage("Choose a PDF first.");
+      setStatus("error");
+      return;
+    }
+    if (!secret) {
+      setMessage("Enter the upload secret.");
+      setStatus("error");
+      return;
+    }
+    setStatus("uploading");
+    setMessage("");
+    try {
+      const res = await fetch("/api/upload-resume", {
+        method: "POST",
+        headers: {
+          "x-upload-secret": secret,
+          "Content-Type": "application/pdf",
+        },
+        body: file,
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStatus("success");
+        setMessage("Resume uploaded. It's live at /api/resume now.");
+      } else {
+        setStatus("error");
+        setMessage(data.error || "Upload failed.");
+      }
+    } catch (err) {
+      setStatus("error");
+      setMessage(err.message);
+    }
+  }
+
+  return (
+    <div className="fixed bottom-4 right-4 z-50 border border-zinc-700 bg-zinc-950 rounded-lg p-4 w-72 shadow-xl font-mono">
+      <div className="text-xs font-bold text-zinc-300 mb-3">Resume Admin</div>
+      <input
+        type="password"
+        placeholder="Upload secret"
+        value={secret}
+        onChange={(e) => setSecret(e.target.value)}
+        className="w-full mb-2 px-2 py-1.5 text-xs bg-zinc-900 border border-zinc-700 rounded text-zinc-200"
+      />
+      <input
+        type="file"
+        accept="application/pdf"
+        onChange={(e) => setFile(e.target.files?.[0] || null)}
+        className="w-full mb-3 text-xs text-zinc-400"
+      />
+      <button
+        type="button"
+        onClick={handleUpload}
+        disabled={status === "uploading"}
+        className="w-full text-xs px-3 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 rounded text-white font-semibold transition-colors"
+      >
+        {status === "uploading" ? "Uploading..." : "Upload Resume"}
+      </button>
+      {message && (
+        <div
+          className={`mt-2 text-[11px] ${status === "error" ? "text-red-400" : "text-emerald-400"
+            }`}
+        >
+          {message}
+        </div>
+      )}
     </div>
   );
 }
@@ -269,7 +345,18 @@ const EXPERIENCE = [
 
 function scrollToSection(id) {
   const el = document.getElementById(id);
-  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  if (el) {
+    const headerOffset = 80;
+    const elementPosition = el.getBoundingClientRect().top;
+    const offsetPosition =
+      elementPosition + window.scrollY - headerOffset;
+
+    window.scrollTo({
+      top: offsetPosition,
+      behavior: "smooth",
+    });
+  }
 }
 
 export default function Portfolio() {
@@ -305,6 +392,13 @@ export default function Portfolio() {
 
           <div className="flex items-center gap-2">
             <a
+              href="/api/resume"
+              download
+              className="inline-flex items-center gap-1.5 text-xs px-3 sm:px-4 py-2 border border-zinc-700 hover:border-zinc-400 hover:bg-zinc-800 transition-colors rounded-md text-zinc-300"
+            >
+              <FileDown size={13} /> Resume
+            </a>
+            <a
               href="#contact"
               onClick={(e) => {
                 e.preventDefault();
@@ -320,7 +414,7 @@ export default function Portfolio() {
               onClick={() => setMobileOpen((v) => !v)}
               aria-label="Toggle navigation menu"
               aria-expanded={mobileOpen}
-              className="sm:hidden w-9 h-9 flex items-center justify-center border border-zinc-700 rounded-md text-zinc-300"
+              className="sm:hidden w-9 h-9 flex items-center justify-center border border-zinc-700 hover:border-zinc-400 hover:bg-zinc-800 transition-colors rounded-md text-zinc-300"
             >
               {mobileOpen ? <X size={16} /> : <Menu size={16} />}
             </button>
@@ -408,8 +502,8 @@ export default function Portfolio() {
           <div className="grid grid-cols-3 border border-zinc-800 rounded-lg overflow-hidden">
             {[
               ["150+", "LeetCode problems solved"],
-              ["Top 2%", "NPTEL Elite+, DSA (IIT KGP)"],
-              ["3+", "Projects deployed to production"],
+              ["Top 2%", "DSA using Java NPTEL (IIT KGP)"],
+              ["3+", "Projects deployed"],
             ].map(([num, label], i) => (
               <div
                 key={num}
@@ -425,7 +519,7 @@ export default function Portfolio() {
         {/* STACK STRIP */}
         <section className="py-10 border-t border-zinc-900">
           <div className="text-center text-[11px] tracking-wide text-zinc-600 mb-6">
-            built &amp; battle-tested with
+            Built &amp; battle-tested with
           </div>
           <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 text-sm text-zinc-400 font-semibold">
             {STACK.map((s) => (
@@ -443,30 +537,33 @@ export default function Portfolio() {
             {[
               {
                 n: "1",
-                color: "bg-violet-600",
+                color: "rgba(147,51,234,0.9)",   // purple — start of gradient
                 title: "Understand the problem",
-                desc: "Real users first — KGN Collection started from watching my father struggle with paper billing, not from a tutorial.",
+                desc: "Start with the real problem, understand the requirements, and focus on what actually needs to be solved before writing code.",
               },
               {
                 n: "2",
-                color: "bg-emerald-600",
+                color: "rgba(20,184,166,0.9)",   // teal — middle of gradient
                 title: "Build for production",
-                desc: "Atomic transactions, role-based auth, real database constraints — code written to survive real traffic, not just a demo.",
+                desc: "Design and develop reliable, scalable solutions with clean architecture, practical engineering, and real-world use cases in mind.",
               },
               {
                 n: "3",
-                color: "bg-sky-600",
+                color: "rgba(134,239,172,0.9)",  // light green — end of gradient
                 title: "Ship and maintain",
-                desc: "Deployed, monitored, and iterated on based on how it's actually used — bugs get logged and fixed, not ignored.",
+                desc: "Deploy, test, monitor, and continuously improve the product so it stays reliable, useful, and ready to grow.",
               },
             ].map((step) => (
               <div key={step.n}>
-                <div
-                  className={`w-8 h-8 ${step.color} text-white flex items-center justify-center text-sm font-bold mb-4 rounded-md`}
-                >
-                  {step.n}
+                <div className="flex items-center gap-3 mb-3">
+                  <div
+                    style={{ backgroundColor: step.color }}
+                    className="w-6 h-6 text-white flex items-center justify-center text-xs font-bold rounded-md shrink-0"
+                  >
+                    {step.n}
+                  </div>
+                  <div className="font-bold text-base">{step.title}</div>
                 </div>
-                <div className="font-bold text-base mb-2">{step.title}</div>
                 <div className="text-sm text-zinc-500 leading-relaxed">{step.desc}</div>
               </div>
             ))}
@@ -491,7 +588,7 @@ export default function Portfolio() {
               const a = ACCENT[p.accent];
               return (
                 <div key={p.name} className="border border-zinc-800 bg-zinc-950 rounded-lg overflow-hidden">
-                  <TermBar path={`~/projects/${p.name.toLowerCase().replace(/\s+/g, "-")}`} />
+                  <TermBar path={`~/projects/${p.name.toLowerCase().replace(/\s+/g, "")}`} />
                   <div className="p-5 sm:p-6">
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <h3 className="text-base sm:text-lg font-bold">{p.name}</h3>
@@ -526,21 +623,19 @@ export default function Portfolio() {
                         {p.bars.map((w, i) => (
                           <div key={i} className="flex items-center gap-2">
                             <span
-                              className={`w-2.5 text-xs ${
-                                i === p.bars.length - 1 && p.bars.length > 1
+                              className={`w-2.5 text-xs ${i === p.bars.length - 1 && p.bars.length > 1
                                   ? "text-red-500"
                                   : a.text
-                              }`}
+                                }`}
                             >
                               {i === p.bars.length - 1 && p.bars.length > 1 ? "−" : "+"}
                             </span>
                             <div className="flex-1 h-1.5 bg-zinc-900 rounded-full overflow-hidden">
                               <div
-                                className={`h-full ${
-                                  i === p.bars.length - 1 && p.bars.length > 1
+                                className={`h-full ${i === p.bars.length - 1 && p.bars.length > 1
                                     ? "bg-red-500"
                                     : a.bg
-                                }`}
+                                  }`}
                                 style={{ width: `${w}%` }}
                               />
                             </div>
@@ -591,7 +686,7 @@ export default function Portfolio() {
           </p>
           <div className="flex flex-wrap gap-3">
             <a
-              href="mailto:arbaz@example.com"
+              href="mailto:arbazansari7934@gmail.com"
               style={GRADIENT_BTN_STYLE}
               className={`flex items-center gap-2 px-5 py-2.5 text-sm ${GRADIENT_BTN_CLASS}`}
             >
@@ -604,13 +699,14 @@ export default function Portfolio() {
               <Github size={14} /> GitHub
             </a>
             <a
-              href="#"
+              href="https://www.linkedin.com/in/arbazansari7934"
               className="flex items-center gap-2 px-5 py-2.5 border border-zinc-700 text-sm hover:border-zinc-400 rounded-md"
             >
               <Linkedin size={14} /> LinkedIn
             </a>
             <a
-              href="#"
+              href="/api/resume"
+              download
               className="flex items-center gap-2 px-5 py-2.5 border border-zinc-700 text-sm hover:border-zinc-400 rounded-md"
             >
               <FileDown size={14} /> Resume
@@ -624,6 +720,9 @@ export default function Portfolio() {
           Arbaz Ansari — Bhopal, India
         </div>
       </footer>
+
+      {typeof window !== "undefined" &&
+        window.location.search.includes("admin") && <ResumeAdmin />}
     </div>
   );
 }
