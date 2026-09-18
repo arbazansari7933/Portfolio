@@ -10,8 +10,8 @@ import {
   ExternalLink,
   Menu,
   X,
+  Award,
 } from "lucide-react";
-//import resume from "../public/resume.pdf";
 
 const SKILL_GROUPS = [
   { name: "Language", items: ["Java", "JavaScript (ES6+)", "C++"] },
@@ -40,23 +40,13 @@ const STACK = [
 
 const PROJECTS = [
   {
-    name: "KGN Collection",
-    tag: "Live",
-    accent: "emerald",
-    github: "https://github.com/arbazansari7933/customer-ledger",
-    live: "https://customer-ledger-chi.vercel.app/login",
-    desc: "Full-stack POS & inventory system (MERN) for my father's retail shop — QR-based billing and automated inventory cut checkout time by ~85%. 33 REST APIs with JWT auth and role-based access (Owner/Employee/Demo), tracking ₹79.8K+ across 35 live customer accounts and 217+ product SKUs.",
-    stack: ["React.js", "Node.js", "Express.js", "MongoDB"],
-    bars: [85, 60, 15],
-  },
-  {
     name: "SentinelTicket",
     tag: "Deployed",
     accent: "violet",
     github: "https://github.com/arbazansari7933/sentinel-ticket",
     desc: "A layered REST API (Routes → Controllers → Services → Repositories) for a movie ticket booking platform. Two-tier concurrency control — Redis distributed locks plus PostgreSQL SELECT FOR UPDATE inside ACID transactions — across a hold → payment → confirm workflow to stop double-booked seats. Dockerized and deployed to AWS EC2 with a GitHub Actions CI/CD pipeline.",
     stack: ["Node.js", "Express.js", "PostgreSQL", "Redis", "Docker", "AWS"],
-    bars: [88, 12],
+    metrics: [],
   },
   {
     name: "CryptoSim",
@@ -66,7 +56,7 @@ const PROJECTS = [
     live: "https://cryptosim-gamma.vercel.app/",
     desc: "Real-time MERN crypto trading simulator with live market data for 6 cryptocurrencies. Market and limit orders execute through MongoDB multi-document transactions for atomic trades, with a WebSocket engine streaming Coinbase prices and JWT-secured trading, portfolio, and leaderboard modules.",
     stack: ["React", "Node.js", "Express", "MongoDB", "Socket.IO"],
-    bars: [70, 10],
+    metrics: [{ value: 6, suffix: "", label: "Cryptocurrencies supported" }],
   },
   {
     name: "MultiVendor (E-Commerce Application)",
@@ -75,7 +65,7 @@ const PROJECTS = [
     github: "https://github.com/Jawed-akhtar1/Multivendor_ecommercee",
     desc: "Collaborated as part of a team to containerize an existing multi-vendor e-commerce application using Docker and prepare it for cloud deployment. Handled application deployment on Render and configured the cloud-hosted MySQL database on Aiven, including environment variables and database connectivity.",
     stack: ["Docker", "Spring Boot", "Render", "Aiven"],
-    bars: [],
+    metrics: [],
   },
 ];
 
@@ -129,7 +119,207 @@ const GRADIENT_BTN_STYLE = {
   border: "none",
 };
 const GRADIENT_BTN_CLASS =
-  "text-white font-semibold rounded-md transition-opacity hover:opacity-90";
+  "text-white font-semibold rounded-md transition-all duration-200 hover:opacity-90 hover:-translate-y-0.5";
+
+/* ---------- Reveal: scroll-triggered fade+slide-in wrapper ---------- */
+function Reveal({ children, delay = 0, className = "" }) {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setVisible(true);
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      style={{ transitionDelay: `${delay}ms` }}
+      className={`transition-all duration-700 ease-out ${
+        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+      } ${className}`}
+    >
+      {typeof children === "function" ? children(visible) : children}
+    </div>
+  );
+}
+
+/* ---------- CountUp: animates a number from 0 to target once visible ---------- */
+function CountUp({ target, suffix = "", duration = 1200 }) {
+  const [value, setValue] = useState(0);
+  const ref = useRef(null);
+  const started = useRef(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !started.current) {
+            started.current = true;
+            const startTime = performance.now();
+            function tick(now) {
+              const progress = Math.min((now - startTime) / duration, 1);
+              const eased = 1 - Math.pow(1 - progress, 3);
+              setValue(Math.round(eased * target));
+              if (progress < 1) requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [target, duration]);
+
+  return (
+    <span ref={ref}>
+      {value}
+      {suffix}
+    </span>
+  );
+}
+
+/* ---------- SectionAccent: small underline bar that draws in once visible ---------- */
+function SectionAccent({ visible, className = "" }) {
+  return (
+    <span
+      className={`block h-0.5 bg-gradient-to-r from-violet-500 via-teal-400 to-emerald-300 origin-left transition-transform duration-700 ease-out ${
+        visible ? "scale-x-100" : "scale-x-0"
+      } ${className}`}
+    />
+  );
+}
+
+
+/* ---------- ScrollProgress: thin bar tracking page scroll ---------- */
+function ScrollProgress() {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    function handleScroll() {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      setProgress(docHeight > 0 ? (scrollTop / docHeight) * 100 : 0);
+    }
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return (
+    <div className="fixed top-0 left-0 w-full h-0.5 z-30 bg-transparent">
+      <div
+        style={{
+          width: `${progress}%`,
+          backgroundImage:
+            "linear-gradient(90deg, rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9))",
+        }}
+        className="h-full transition-[width] duration-100 ease-out"
+      />
+    </div>
+  );
+}
+
+/* ---------- useRipple: click ripple effect for buttons ---------- */
+function useRipple() {
+  return function onClick(e) {
+    const button = e.currentTarget;
+    const rect = button.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const span = document.createElement("span");
+    span.className = "ripple-effect";
+    span.style.width = span.style.height = `${size}px`;
+    span.style.left = `${e.clientX - rect.left - size / 2}px`;
+    span.style.top = `${e.clientY - rect.top - size / 2}px`;
+    button.appendChild(span);
+    setTimeout(() => span.remove(), 600);
+  };
+}
+
+/* ---------- Typewriter: types out text once on mount ---------- */
+function Typewriter({ text, speed = 70, startDelay = 300 }) {
+  const [shown, setShown] = useState("");
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    let i = 0;
+    let interval;
+    const timeout = setTimeout(() => {
+      interval = setInterval(() => {
+        i += 1;
+        setShown(text.slice(0, i));
+        if (i >= text.length) {
+          clearInterval(interval);
+          setDone(true);
+        }
+      }, speed);
+    }, startDelay);
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(interval);
+    };
+  }, [text, speed, startDelay]);
+
+  return (
+    <>
+      {shown}
+      {!done && <span className="inline-block w-1.5 h-8 sm:h-10 bg-white ml-1 align-middle animate-blink-cursor" />}
+    </>
+  );
+}
+
+
+/* ---------- CustomCursor: replaces default pointer on larger screens ---------- */
+function CustomCursor() {
+  const [pos, setPos] = useState({ x: -100, y: -100 });
+  const [visible, setVisible] = useState(false);
+  const [hoveringInteractive, setHoveringInteractive] = useState(false);
+
+  useEffect(() => {
+    function handleMove(e) {
+      setPos({ x: e.clientX, y: e.clientY });
+      if (!visible) setVisible(true);
+      setHoveringInteractive(!!e.target.closest("a, button"));
+    }
+    window.addEventListener("mousemove", handleMove);
+    return () => window.removeEventListener("mousemove", handleMove);
+  }, [visible]);
+
+  return (
+    <div
+      className="pointer-events-none fixed z-40 hidden sm:block"
+      style={{
+        left: pos.x,
+        top: pos.y,
+        transform: `translate(-50%, -50%) scale(${hoveringInteractive ? 1.8 : 1})`,
+        opacity: visible ? 1 : 0,
+        transition:
+          "transform 150ms ease-out, opacity 200ms ease-out, left 80ms linear, top 80ms linear",
+      }}
+    >
+      <div className="w-5 h-5 rounded-full border border-emerald-400/70" />
+    </div>
+  );
+}
+
 
 function TermBar({ path, dot1 = "bg-red-500", dot2 = "bg-amber-500", dot3 = "bg-emerald-500" }) {
   return (
@@ -225,7 +415,7 @@ function SkillInstaller() {
                   }`}
               >
                 <span
-                  className={`w-4 text-center ${status[i] === "done" ? "text-emerald-400" : "text-amber-400"
+                  className={`w-4 text-center ${status[i] === "done" ? "text-emerald-400 animate-pop-in" : "text-amber-400"
                     }`}
                 >
                   {status[i] === "done" ? "✓" : status[i] === "loading" ? SPIN_FRAMES[frame] : ""}
@@ -338,8 +528,47 @@ const EXPERIENCE = [
     date: "Dec 2025 — present",
     role: "Freelance Full-Stack Developer",
     org: "KGN Collection — QR Billing & Stock Manager",
-    accent: "text-emerald-400",
-    desc: "Built a full-stack MERN POS and inventory system for a real retail shop — 33 REST APIs with JWT auth and role-based access, cutting checkout time by ~85% and tracking ₹79.8K+ across 35 live customer accounts and 217+ SKUs, in continuous production for 3+ months.",
+    accent: "emerald",
+    tag: "Live",
+    github: "https://github.com/arbazansari7933/customer-ledger",
+    live: "https://customer-ledger-chi.vercel.app/login",
+    desc: "Full-stack POS & inventory system (MERN) for my father's retail shop — QR-based billing and automated inventory cut checkout time by ~85%. 33 REST APIs with JWT auth and role-based access (Owner/Employee/Demo), tracking ₹79.8K+ across 35 live customer accounts and 217+ product SKUs, in continuous production for 3+ months.",
+    stack: ["React.js", "Node.js", "Express.js", "MongoDB"],
+    metrics: [
+      { value: 85, suffix: "%", label: "Faster checkout" },
+      { value: 35, suffix: "", label: "Live customer accounts" },
+      { value: 217, suffix: "+", label: "Product SKUs tracked" },
+    ],
+  },
+];
+
+const CERTIFICATIONS = [
+  {
+    title: "Data Structures & Algorithms using Java",
+    issuer: "NPTEL (IIT Kharagpur)",
+    badge: "Top 2% · Elite+ (73%)",
+    link: "https://archive.nptel.ac.in/content/noc/NOC25/SEM2/Ecertificates/106/noc25-cs148/Course/NPTEL25CS148S105320071610380559.pdf",
+  },
+  {
+    title: "Problem Solving through Programming in C",
+    issuer: "NPTEL (IIT Kharagpur)",
+    badge: "Elite+ (64%)",
+    link: "https://archive.nptel.ac.in/content/noc/NOC25/SEM1/Ecertificates/106/noc25-cs56/Course/NPTEL25CS56S65570024404404973.pdf",
+  },
+];
+
+const ACHIEVEMENTS = [
+  {
+    title: "150+ DSA problems solved on LeetCode",
+    detail: "Across arrays, strings, dynamic programming, graphs, and more",
+    link: "https://leetcode.com/u/arbazansari7933/",
+    linkLabel: "View profile",
+  },
+  {
+    title: "5★ in C++, 4★ in Problem Solving, Java & C",
+    detail: "Skill certifications on HackerRank",
+    link: "https://www.hackerrank.com/profile/arbazansari7933",
+    linkLabel: "View profile",
   },
 ];
 
@@ -361,40 +590,74 @@ function scrollToSection(id) {
 
 export default function Portfolio() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("");
+  const ripple = useRipple();
+
+  useEffect(() => {
+    const sections = NAV_LINKS.map((l) => document.getElementById(l.href.slice(1))).filter(
+      Boolean
+    );
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id);
+          }
+        });
+      },
+      { rootMargin: "-40% 0px -50% 0px", threshold: 0 }
+    );
+    sections.forEach((s) => observer.observe(s));
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-black text-zinc-100 font-mono">
+    <div className="min-h-screen bg-black text-zinc-100 font-mono relative">
+      <CustomCursor />
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-violet-600/10 blur-3xl" />
+        <div className="absolute top-1/2 -right-32 w-96 h-96 rounded-full bg-emerald-500/10 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 w-96 h-96 rounded-full bg-teal-500/10 blur-3xl" />
+      </div>
+      <ScrollProgress />
       {/* HEADER */}
       <header className="sticky top-0 z-20 bg-black/90 backdrop-blur border-b border-zinc-800">
         <div className="max-w-4xl mx-auto flex items-center justify-between px-5 py-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 border-2 border-white flex items-center justify-center font-black text-sm rounded-md">
+          <div className="flex items-center gap-2.5 group">
+            <div className="w-8 h-8 border-2 border-white flex items-center justify-center font-black text-sm rounded-md transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110">
               A
             </div>
             <span className="font-bold text-sm tracking-tight">arbaz.dev</span>
           </div>
 
           <nav className="hidden sm:flex gap-6 text-xs text-zinc-400">
-            {NAV_LINKS.map((l) => (
-              <a
-                key={l.href}
-                href={l.href}
-                onClick={(e) => {
-                  e.preventDefault();
-                  scrollToSection(l.href.slice(1));
-                }}
-                className="hover:text-white"
-              >
-                {l.label}
-              </a>
-            ))}
+            {NAV_LINKS.map((l) => {
+              const isActive = activeSection === l.href.slice(1);
+              return (
+                <a
+                  key={l.href}
+                  href={l.href}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    scrollToSection(l.href.slice(1));
+                  }}
+                  className={`relative transition-colors duration-200 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-px after:bg-emerald-400 after:transition-all after:duration-300 ${
+                    isActive
+                      ? "text-white after:w-full"
+                      : "hover:text-white after:w-0 hover:after:w-full"
+                  }`}
+                >
+                  {l.label}
+                </a>
+              );
+            })}
           </nav>
 
           <div className="flex items-center gap-2">
             <a
               href="/api/resume"
               download
-              className="inline-flex items-center gap-1.5 text-xs px-3 sm:px-4 py-2 border border-zinc-700 hover:border-zinc-400 hover:bg-zinc-800 transition-colors rounded-md text-zinc-300"
+              className="inline-flex items-center gap-1.5 text-xs px-3 sm:px-4 py-2 border border-zinc-700 hover:border-zinc-400 hover:bg-zinc-800 hover:-translate-y-0.5 transition-all duration-200 rounded-md text-zinc-300"
             >
               <FileDown size={13} /> Resume
             </a>
@@ -402,10 +665,11 @@ export default function Portfolio() {
               href="#contact"
               onClick={(e) => {
                 e.preventDefault();
+                ripple(e);
                 scrollToSection("contact");
               }}
               style={GRADIENT_BTN_STYLE}
-              className={`hidden sm:inline-block text-xs px-4 py-2 ${GRADIENT_BTN_CLASS}`}
+              className={`relative overflow-hidden hidden sm:inline-block text-xs px-4 py-2 ${GRADIENT_BTN_CLASS}`}
             >
               Contact
             </a>
@@ -414,7 +678,7 @@ export default function Portfolio() {
               onClick={() => setMobileOpen((v) => !v)}
               aria-label="Toggle navigation menu"
               aria-expanded={mobileOpen}
-              className="sm:hidden w-9 h-9 flex items-center justify-center border border-zinc-700 hover:border-zinc-400 hover:bg-zinc-800 transition-colors rounded-md text-zinc-300"
+              className="sm:hidden w-9 h-9 flex items-center justify-center border border-zinc-700 hover:border-zinc-400 hover:bg-zinc-800 hover:-translate-y-0.5 transition-all duration-200 rounded-md text-zinc-300"
             >
               {mobileOpen ? <X size={16} /> : <Menu size={16} />}
             </button>
@@ -442,11 +706,12 @@ export default function Portfolio() {
               href="#contact"
               onClick={(e) => {
                 e.preventDefault();
+                ripple(e);
                 setMobileOpen(false);
                 scrollToSection("contact");
               }}
               style={GRADIENT_BTN_STYLE}
-              className={`text-sm px-4 py-2.5 text-center ${GRADIENT_BTN_CLASS}`}
+              className={`relative overflow-hidden text-sm px-4 py-2.5 text-center ${GRADIENT_BTN_CLASS}`}
             >
               Contact
             </a>
@@ -454,64 +719,123 @@ export default function Portfolio() {
         )}
       </header>
 
-      <main className="max-w-4xl mx-auto px-5">
+      <main className="relative z-10 max-w-4xl mx-auto px-5">
         {/* HERO */}
         <section className="pt-14 pb-10">
-          <div className="text-xs text-emerald-400 mb-3">
-            <span className="text-zinc-600">arbaz@bhopal</span>:~$ whoami
+          <div
+            className="text-xs text-emerald-400 mb-3 animate-fade-up"
+            style={{ animationDelay: "0ms" }}
+          >
+            <span className="text-zinc-600">arbaz@dev</span>:~$ whoami
+            <span className="inline-block w-2 h-4 bg-emerald-400 ml-1 align-middle animate-blink-cursor" />
           </div>
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-3">
-            Arbaz Ansari
+          <h1
+            className="text-4xl sm:text-5xl font-bold tracking-tight mb-3 animate-fade-up"
+            style={{ animationDelay: "80ms" }}
+          >
+            <Typewriter text="Arbaz Ansari" />
           </h1>
-          <p className="text-lg sm:text-xl text-zinc-400 mb-5">
-            <span className="bg-gradient-to-r from-white via-violet-300 to-emerald-300 bg-clip-text text-transparent font-semibold">
+          <p
+            className="text-lg sm:text-xl text-zinc-400 mb-5 animate-fade-up"
+            style={{ animationDelay: "160ms" }}
+          >
+            <span className="bg-gradient-to-r from-white via-violet-300 to-emerald-300 bg-clip-text text-transparent font-semibold animate-gradient-shimmer">
               Backend-focused full-stack developer
             </span>{" "}
             — MERN stack
           </p>
-          <p className="text-sm text-zinc-500 max-w-xl mb-8 leading-relaxed">
+          <p
+            className="text-sm text-zinc-500 max-w-xl mb-8 leading-relaxed animate-fade-up"
+            style={{ animationDelay: "240ms" }}
+          >
             3rd-year CSE student at IES College of Technology, Bhopal, building
-            production-grade backend systems — not tutorial projects. One of
-            them is running live in my father's retail shop today. Currently
-            sharpening DSA for placement season.
+            practical software that solves real problems—not just tutorial
+            projects. I've built applications ranging from a retail management
+            system used in a real business to CryptoSim, a real-time crypto
+            trading simulator. I enjoy working with backend systems, APIs,
+            databases, and real-time applications. Currently sharpening my
+            DSA and problem-solving skills for placement season.
           </p>
-          <div className="flex flex-wrap gap-3 mb-12">
+          <div
+            className="flex flex-wrap gap-3 mb-12 animate-fade-up"
+            style={{ animationDelay: "320ms" }}
+          >
             <a
               href="#projects"
               onClick={(e) => {
                 e.preventDefault();
                 scrollToSection("projects");
               }}
-              className="flex items-center gap-2 px-5 py-2.5 border border-zinc-700 text-sm hover:border-zinc-400 rounded-md"
+              className="group flex items-center gap-2 px-5 py-2.5 border border-zinc-700 text-sm hover:border-zinc-400 hover:-translate-y-0.5 transition-all duration-200 rounded-md"
             >
-              View projects <ArrowRight size={14} />
+              View projects{" "}
+              <ArrowRight
+                size={14}
+                className="transition-transform duration-200 group-hover:translate-x-1"
+              />
             </a>
             <a
               href="#contact"
               onClick={(e) => {
                 e.preventDefault();
+                ripple(e);
                 scrollToSection("contact");
               }}
               style={GRADIENT_BTN_STYLE}
-              className={`flex items-center gap-2 px-5 py-2.5 text-sm ${GRADIENT_BTN_CLASS}`}
+              className={`relative overflow-hidden group flex items-center gap-2 px-5 py-2.5 text-sm ${GRADIENT_BTN_CLASS}`}
             >
-              Get in touch <ArrowRight size={14} />
+              Get in touch{" "}
+              <ArrowRight
+                size={14}
+                className="transition-transform duration-200 group-hover:translate-x-1"
+              />
             </a>
           </div>
 
-          <div className="grid grid-cols-3 border border-zinc-800 rounded-lg overflow-hidden">
+          <div
+            className="grid grid-cols-3 border border-zinc-800 rounded-lg overflow-hidden animate-fade-up"
+            style={{ animationDelay: "400ms" }}
+          >
             {[
-              ["150+", "LeetCode problems solved"],
-              ["Top 2%", "DSA using Java NPTEL (IIT KGP)"],
-              ["3+", "Projects deployed"],
-            ].map(([num, label], i) => (
-              <div
-                key={num}
-                className={`p-4 sm:p-5 ${i !== 2 ? "border-r border-zinc-800" : ""}`}
+              {
+                value: 150,
+                suffix: "+",
+                label: "LeetCode problems solved",
+                href: "https://leetcode.com/u/arbazansari7933/",
+              },
+              {
+                value: null,
+                display: "Top 2%",
+                label: "DSA using Java NPTEL (IIT KGP)",
+                href: "https://archive.nptel.ac.in/content/noc/NOC25/SEM2/Ecertificates/106/noc25-cs148/Course/NPTEL25CS148S105320071610380559.pdf",
+              },
+              {
+                value: 3,
+                suffix: "+",
+                label: "Projects deployed",
+                href: "https://github.com/arbazansari7933",
+              },
+            ].map((stat, i) => (
+              <a
+                key={i}
+                href={stat.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`group/stat relative p-4 sm:p-5 transition-colors duration-200 hover:bg-zinc-900 ${i !== 2 ? "border-r border-zinc-800" : ""}`}
               >
-                <div className="text-lg sm:text-xl font-bold">{num}</div>
-                <div className="text-[11px] sm:text-xs text-zinc-500 mt-1">{label}</div>
-              </div>
+                <ExternalLink
+                  size={11}
+                  className="absolute top-3 right-3 text-zinc-700 transition-colors duration-200 group-hover/stat:text-zinc-400"
+                />
+                <div className="text-lg sm:text-xl font-bold">
+                  {stat.value !== null ? (
+                    <CountUp target={stat.value} suffix={stat.suffix} />
+                  ) : (
+                    stat.display
+                  )}
+                </div>
+                <div className="text-[11px] sm:text-xs text-zinc-500 mt-1">{stat.label}</div>
+              </a>
             ))}
           </div>
         </section>
@@ -521,18 +845,34 @@ export default function Portfolio() {
           <div className="text-center text-[11px] tracking-wide text-zinc-600 mb-6">
             Built &amp; battle-tested with
           </div>
-          <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 text-sm text-zinc-400 font-semibold">
-            {STACK.map((s) => (
-              <span key={s}>{s}</span>
-            ))}
-          </div>
+          <Reveal>
+            <div className="overflow-hidden">
+              <div className="flex w-max gap-16 text-sm text-zinc-400 font-semibold animate-marquee">
+                {[...STACK, ...STACK].map((s, i) => (
+                  <span
+                    key={`${s}-${i}`}
+                    className="transition-colors duration-200 hover:text-emerald-400 shrink-0"
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </Reveal>
         </section>
 
         {/* PROCESS — numbered steps, Render-style */}
         <section id="process" className="py-14 border-t border-zinc-900">
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-10">
-            Build, ship, maintain.
-          </h2>
+          <Reveal>
+            {(visible) => (
+              <div className="inline-block mb-10">
+                <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">
+                  Build, ship, maintain.
+                </h2>
+                <SectionAccent visible={visible} className="w-full" />
+              </div>
+            )}
+          </Reveal>
           <div className="grid sm:grid-cols-3 gap-8">
             {[
               {
@@ -553,108 +893,135 @@ export default function Portfolio() {
                 title: "Ship and maintain",
                 desc: "Deploy, test, monitor, and continuously improve the product so it stays reliable, useful, and ready to grow.",
               },
-            ].map((step) => (
-              <div key={step.n}>
-                <div className="flex items-center gap-3 mb-3">
-                  <div
-                    style={{ backgroundColor: step.color }}
-                    className="w-6 h-6 text-white flex items-center justify-center text-xs font-bold rounded-md shrink-0"
-                  >
-                    {step.n}
+            ].map((step, i) => (
+              <Reveal key={step.n} delay={i * 130}>
+                <div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div
+                      style={{ backgroundColor: step.color }}
+                      className="w-6 h-6 text-white flex items-center justify-center text-xs font-bold rounded-md shrink-0 transition-transform duration-200 hover:scale-110 hover:rotate-3"
+                    >
+                      {step.n}
+                    </div>
+                    <div className="font-bold text-base">{step.title}</div>
                   </div>
-                  <div className="font-bold text-base">{step.title}</div>
+                  <div className="text-sm text-zinc-500 leading-relaxed">{step.desc}</div>
                 </div>
-                <div className="text-sm text-zinc-500 leading-relaxed">{step.desc}</div>
-              </div>
+              </Reveal>
             ))}
           </div>
         </section>
 
         {/* SKILLS */}
         <section id="skills" className="py-14 border-t border-zinc-900">
-          <h2 className="text-xl font-bold mb-6">Skills</h2>
-          <SkillInstaller />
+          <Reveal>
+            {(visible) => (
+              <div className="inline-block mb-4">
+                <h2 className="text-xl font-bold mb-2">Skills</h2>
+                <SectionAccent visible={visible} className="w-full" />
+              </div>
+            )}
+          </Reveal>
+          <Reveal>
+            <SkillInstaller />
+          </Reveal>
         </section>
 
         {/* PROJECTS */}
         <section id="projects" className="py-14 border-t border-zinc-900">
-          <h2 className="text-xl font-bold mb-2">Projects</h2>
+          <Reveal>
+            {(visible) => (
+              <div className="inline-block mb-4">
+                <h2 className="text-xl font-bold mb-2">Projects</h2>
+                <SectionAccent visible={visible} className="w-full" />
+              </div>
+            )}
+          </Reveal>
           <p className="text-sm text-zinc-500 mb-8">
             Real systems solving real problems — most run beyond just localhost.
           </p>
 
           <div className="flex flex-col gap-6">
-            {PROJECTS.map((p) => {
+            {PROJECTS.map((p, i) => {
               const a = ACCENT[p.accent];
               return (
-                <div key={p.name} className="border border-zinc-800 bg-zinc-950 rounded-lg overflow-hidden">
-                  <TermBar path={`~/projects/${p.name.toLowerCase().replace(/\s+/g, "")}`} />
-                  <div className="p-5 sm:p-6">
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <h3 className="text-base sm:text-lg font-bold">{p.name}</h3>
-                      <div className="flex items-center gap-3 shrink-0 pt-0.5">
-                        <span className={`flex items-center gap-1.5 text-xs ${a.text}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${a.dot}`} />
-                          {p.tag}
-                        </span>
-                        {p.live && (
-                          <a
-                            href={p.live}
-                            aria-label={`${p.name} live link`}
-                            className="text-zinc-500 hover:text-white"
-                          >
-                            <ExternalLink size={15} />
-                          </a>
-                        )}
-                        <a
-                          href={p.github}
-                          aria-label={`${p.name} on GitHub`}
-                          className="text-zinc-500 hover:text-white"
-                        >
-                          <Github size={15} />
-                        </a>
-                      </div>
-                    </div>
-                    <p className="text-sm text-zinc-500 leading-relaxed mb-4 max-w-2xl">
-                      {p.desc}
-                    </p>
-                    {p.bars.length > 0 && (
-                      <div className="flex flex-col gap-2 mb-4">
-                        {p.bars.map((w, i) => (
-                          <div key={i} className="flex items-center gap-2">
-                            <span
-                              className={`w-2.5 text-xs ${i === p.bars.length - 1 && p.bars.length > 1
-                                  ? "text-red-500"
-                                  : a.text
-                                }`}
-                            >
-                              {i === p.bars.length - 1 && p.bars.length > 1 ? "−" : "+"}
-                            </span>
-                            <div className="flex-1 h-1.5 bg-zinc-900 rounded-full overflow-hidden">
-                              <div
-                                className={`h-full ${i === p.bars.length - 1 && p.bars.length > 1
-                                    ? "bg-red-500"
-                                    : a.bg
-                                  }`}
-                                style={{ width: `${w}%` }}
-                              />
+                <Reveal key={p.name} delay={i * 130}>
+                  {(visible) => (
+                    <div className="group relative rounded-lg p-px overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/40">
+                      <div
+                        className="absolute -inset-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-spin-border"
+                        style={{
+                          backgroundImage:
+                            "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))",
+                        }}
+                      />
+                      <div className="relative bg-zinc-950 border border-zinc-800 group-hover:border-transparent transition-colors duration-300 rounded-lg overflow-hidden">
+                        <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
+                          <div className="absolute inset-y-0 -left-1/2 w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[400%] transition-transform duration-1000 ease-out" />
+                        </div>
+                        <TermBar path={`~/projects/${p.name.toLowerCase().replace(/\s+/g, "")}`} />
+                        <div className="p-5 sm:p-6">
+                          <div className="flex items-start justify-between gap-3 mb-3">
+                            <h3 className="text-base sm:text-lg font-bold">{p.name}</h3>
+                            <div className="flex items-center gap-3 shrink-0 pt-0.5">
+                              <span className={`flex items-center gap-1.5 text-xs ${a.text}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${a.dot} animate-soft-glow`} />
+                                {p.tag}
+                              </span>
+                              {p.live && (
+                                <a
+                                  href={p.live}
+                                  aria-label={`${p.name} live link`}
+                                  className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125"
+                                >
+                                  <ExternalLink size={15} />
+                                </a>
+                              )}
+                              <a
+                                href={p.github}
+                                aria-label={`${p.name} on GitHub`}
+                                className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125"
+                              >
+                                <Github size={15} />
+                              </a>
                             </div>
                           </div>
-                        ))}
+                          <p className="text-sm text-zinc-500 leading-relaxed mb-4 max-w-2xl">
+                            {p.desc}
+                          </p>
+                          {p.metrics.length > 0 && (
+                            <div className="flex flex-wrap gap-6 mb-4 pb-4 border-b border-zinc-900">
+                              {p.metrics.map((m, mi) => (
+                                <div key={mi} className="flex flex-col">
+                                  <div className={`text-lg sm:text-xl font-bold ${a.text}`}>
+                                    {visible ? (
+                                      <CountUp target={m.value} suffix={m.suffix} />
+                                    ) : (
+                                      "0"
+                                    )}
+                                  </div>
+                                  <div className="text-[10px] sm:text-[11px] text-zinc-500 mt-0.5">
+                                    {m.label}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <div className="flex flex-wrap gap-2 pt-4 border-t border-zinc-900">
+                            {p.stack.map((s) => (
+                              <span
+                                key={s}
+                                className="text-[11px] px-2.5 py-1 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-full transition-colors duration-200 hover:border-zinc-600 hover:text-zinc-200"
+                              >
+                                {s}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                    )}
-                    <div className="flex flex-wrap gap-2 pt-4 border-t border-zinc-900">
-                      {p.stack.map((s) => (
-                        <span
-                          key={s}
-                          className="text-[11px] px-2.5 py-1 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-full"
-                        >
-                          {s}
-                        </span>
-                      ))}
                     </div>
-                  </div>
-                </div>
+                  )}
+                </Reveal>
               );
             })}
           </div>
@@ -662,63 +1029,224 @@ export default function Portfolio() {
 
         {/* EXPERIENCE */}
         <section id="experience" className="py-14 border-t border-zinc-900">
-          <h2 className="text-xl font-bold mb-6">Experience</h2>
-          <div className="border border-zinc-800 bg-zinc-950 divide-y divide-zinc-900 rounded-lg overflow-hidden">
-            {EXPERIENCE.map((item) => (
-              <div key={item.role} className="p-5 sm:p-6">
-                <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
-                  <h3 className="font-bold text-base">{item.role}</h3>
-                  <span className="text-xs text-zinc-600">{item.date}</span>
-                </div>
-                <div className={`text-sm font-semibold mb-2 ${item.accent}`}>{item.org}</div>
-                <p className="text-sm text-zinc-500 leading-relaxed max-w-2xl">{item.desc}</p>
+          <Reveal>
+            {(visible) => (
+              <div className="inline-block mb-4">
+                <h2 className="text-xl font-bold mb-2">Experience</h2>
+                <SectionAccent visible={visible} className="w-full" />
               </div>
-            ))}
+            )}
+          </Reveal>
+          <div className="border border-zinc-800 bg-zinc-950 divide-y divide-zinc-900 rounded-lg overflow-hidden">
+            {EXPERIENCE.map((item, i) => {
+              const a = ACCENT[item.accent];
+              return (
+                <Reveal key={item.role} delay={i * 120}>
+                  {(visible) => (
+                    <div className="p-5 sm:p-6 transition-colors duration-200 hover:bg-zinc-900">
+                      <div className="flex flex-wrap items-start justify-between gap-2 mb-1">
+                        <h3 className="font-bold text-base">{item.role}</h3>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className="text-xs text-zinc-600">{item.date}</span>
+                          {item.tag && (
+                            <span className={`flex items-center gap-1.5 text-xs ${a.text}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${a.dot} animate-soft-glow`} />
+                              {item.tag}
+                            </span>
+                          )}
+                          {item.live && (
+                            <a
+                              href={item.live}
+                              aria-label={`${item.org} live link`}
+                              className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125"
+                            >
+                              <ExternalLink size={15} />
+                            </a>
+                          )}
+                          {item.github && (
+                            <a
+                              href={item.github}
+                              aria-label={`${item.org} on GitHub`}
+                              className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125"
+                            >
+                              <Github size={15} />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                      <div className={`text-sm font-semibold mb-2 ${a.text}`}>{item.org}</div>
+                      <p className="text-sm text-zinc-500 leading-relaxed max-w-2xl mb-4">
+                        {item.desc}
+                      </p>
+                      {item.metrics && item.metrics.length > 0 && (
+                        <div className="flex flex-wrap gap-6 mb-4 pb-4 border-b border-zinc-900">
+                          {item.metrics.map((m, mi) => (
+                            <div key={mi} className="flex flex-col">
+                              <div className={`text-lg sm:text-xl font-bold ${a.text}`}>
+                                {visible ? (
+                                  <CountUp target={m.value} suffix={m.suffix} />
+                                ) : (
+                                  "0"
+                                )}
+                              </div>
+                              <div className="text-[10px] sm:text-[11px] text-zinc-500 mt-0.5">
+                                {m.label}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {item.stack && item.stack.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {item.stack.map((s) => (
+                            <span
+                              key={s}
+                              className="text-[11px] px-2.5 py-1 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-full transition-colors duration-200 hover:border-zinc-600 hover:text-zinc-200"
+                            >
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Reveal>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* CERTIFICATIONS & ACHIEVEMENTS */}
+        <section id="achievements" className="py-14 border-t border-zinc-900">
+          <Reveal>
+            {(visible) => (
+              <div className="inline-block mb-4">
+                <h2 className="text-xl font-bold mb-2">Certifications &amp; Achievements</h2>
+                <SectionAccent visible={visible} className="w-full" />
+              </div>
+            )}
+          </Reveal>
+
+          <div className="grid sm:grid-cols-2 gap-6">
+            <div>
+              <div className="text-xs text-zinc-600 mb-3 tracking-wide">Certifications</div>
+              <div className="border border-zinc-800 bg-zinc-950 divide-y divide-zinc-900 rounded-lg overflow-hidden">
+                {CERTIFICATIONS.map((c, i) => (
+                  <Reveal key={c.title} delay={i * 120}>
+                    <div className="p-4 sm:p-5 transition-colors duration-200 hover:bg-zinc-900 group/cert">
+                      <div className="flex items-start gap-3">
+                        <Award
+                          size={16}
+                          className="text-emerald-400 mt-0.5 shrink-0 transition-transform duration-200 group-hover/cert:scale-110 group-hover/cert:rotate-3"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-sm">{c.title}</div>
+                          <div className="text-xs text-zinc-500 mt-0.5">{c.issuer}</div>
+                          <div className="text-[11px] text-emerald-400 mt-1">{c.badge}</div>
+                        </div>
+                        <a
+                          href={c.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`${c.title} certificate`}
+                          className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125 shrink-0"
+                        >
+                          <FileDown size={15} />
+                        </a>
+                      </div>
+                    </div>
+                  </Reveal>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-xs text-zinc-600 mb-3 tracking-wide">Achievements</div>
+              <div className="border border-zinc-800 bg-zinc-950 divide-y divide-zinc-900 rounded-lg overflow-hidden">
+                {ACHIEVEMENTS.map((ach, i) => (
+                  <Reveal key={ach.title} delay={i * 120}>
+                    <div className="p-4 sm:p-5 transition-colors duration-200 hover:bg-zinc-900 group/ach">
+                      <div className="flex items-start gap-3">
+                        <Award
+                          size={16}
+                          className="text-violet-400 mt-0.5 shrink-0 transition-transform duration-200 group-hover/ach:scale-110 group-hover/ach:rotate-3"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-sm">{ach.title}</div>
+                          <div className="text-xs text-zinc-500 mt-0.5">{ach.detail}</div>
+                        </div>
+                        <a
+                          href={ach.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={ach.linkLabel}
+                          className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125 shrink-0"
+                        >
+                          <ExternalLink size={15} />
+                        </a>
+                      </div>
+                    </div>
+                  </Reveal>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
 
         {/* CONTACT */}
         <section id="contact" className="py-14 border-t border-zinc-900 pb-20">
-          <h2 className="text-xl font-bold mb-2">Get in touch</h2>
+          <Reveal>
+            {(visible) => (
+              <div className="inline-block mb-4">
+                <h2 className="text-xl font-bold mb-2">Get in touch</h2>
+                <SectionAccent visible={visible} className="w-full" />
+              </div>
+            )}
+          </Reveal>
           <p className="text-sm text-zinc-500 mb-8 max-w-xl">
             Open to full-stack and backend roles, freelance projects, and placement
             opportunities. Reach out through any of the channels below.
           </p>
-          <div className="flex flex-wrap gap-3">
-            <a
-              href="mailto:arbazansari7934@gmail.com"
-              style={GRADIENT_BTN_STYLE}
-              className={`flex items-center gap-2 px-5 py-2.5 text-sm ${GRADIENT_BTN_CLASS}`}
-            >
-              <Mail size={14} /> Email
-            </a>
-            <a
-              href="https://github.com/arbazansari7933"
-              className="flex items-center gap-2 px-5 py-2.5 border border-zinc-700 text-sm hover:border-zinc-400 rounded-md"
-            >
-              <Github size={14} /> GitHub
-            </a>
-            <a
-              href="https://www.linkedin.com/in/arbazansari7934"
-              className="flex items-center gap-2 px-5 py-2.5 border border-zinc-700 text-sm hover:border-zinc-400 rounded-md"
-            >
-              <Linkedin size={14} /> LinkedIn
-            </a>
-            <a
-              href="/api/resume"
-              download
-              className="flex items-center gap-2 px-5 py-2.5 border border-zinc-700 text-sm hover:border-zinc-400 rounded-md"
-            >
-              <FileDown size={14} /> Resume
-            </a>
-          </div>
+          <Reveal>
+            <div className="flex flex-wrap gap-3">
+              <a
+                href="mailto:arbazansari7934@gmail.com"
+                onClick={ripple}
+                style={GRADIENT_BTN_STYLE}
+                className={`relative overflow-hidden flex items-center gap-2 px-5 py-2.5 text-sm ${GRADIENT_BTN_CLASS}`}
+              >
+                <Mail size={14} /> Email
+              </a>
+              <a
+                href="https://github.com/arbazansari7933"
+                className="flex items-center gap-2 px-5 py-2.5 border border-zinc-700 text-sm hover:border-zinc-400 hover:-translate-y-0.5 transition-all duration-200 rounded-md"
+              >
+                <Github size={14} /> GitHub
+              </a>
+              <a
+                href="https://www.linkedin.com/in/arbazansari7934"
+                className="flex items-center gap-2 px-5 py-2.5 border border-zinc-700 text-sm hover:border-zinc-400 hover:-translate-y-0.5 transition-all duration-200 rounded-md"
+              >
+                <Linkedin size={14} /> LinkedIn
+              </a>
+              <a
+                href="/api/resume"
+                download
+                className="flex items-center gap-2 px-5 py-2.5 border border-zinc-700 text-sm hover:border-zinc-400 hover:-translate-y-0.5 transition-all duration-200 rounded-md"
+              >
+                <FileDown size={14} /> Resume
+              </a>
+            </div>
+          </Reveal>
         </section>
       </main>
 
-      <footer className="border-t border-zinc-900 py-6">
-        <div className="max-w-4xl mx-auto px-5 text-center text-xs text-zinc-600">
-          Arbaz Ansari — Bhopal, India
-        </div>
+      <footer className="relative z-10 border-t border-zinc-900 py-6">
+        <Reveal>
+          <div className="max-w-4xl mx-auto px-5 text-center text-xs text-zinc-600">
+            Arbaz Ansari — Bhopal, India
+          </div>
+        </Reveal>
       </footer>
 
       {typeof window !== "undefined" &&
