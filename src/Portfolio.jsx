@@ -394,7 +394,10 @@ function SkillInstaller() {
   }
 
   return (
-    <div ref={sectionRef} className="border border-zinc-800 bg-zinc-950 rounded-lg overflow-hidden">
+    <div
+      ref={sectionRef}
+      className="relative border border-zinc-800 bg-zinc-950 rounded-lg overflow-hidden group-hover:border-transparent group-active:border-transparent transition-colors duration-300"
+    >
       <TermBar path="~/stack" />
       <div className="p-5 sm:p-6 font-mono text-sm">
         <div className="text-zinc-600 mb-4">$ npm install skills</div>
@@ -593,6 +596,12 @@ export default function Portfolio() {
   const [activeSection, setActiveSection] = useState("");
   const ripple = useRipple();
 
+  // iOS Safari won't apply :active styles on tap unless a touchstart
+  // listener exists somewhere on the page. This is a required no-op fix.
+  useEffect(() => {
+    document.addEventListener("touchstart", function () {}, false);
+  }, []);
+
   useEffect(() => {
     const sections = NAV_LINKS.map((l) => document.getElementById(l.href.slice(1))).filter(
       Boolean
@@ -654,13 +663,22 @@ export default function Portfolio() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <a
-              href="/api/resume"
-              download
-              className="inline-flex items-center gap-1.5 text-xs px-3 sm:px-4 py-2 border border-zinc-700 hover:border-zinc-400 hover:bg-zinc-800 hover:-translate-y-0.5 transition-all duration-200 rounded-md text-zinc-300"
-            >
-              <FileDown size={13} /> Resume
-            </a>
+            <span className="group/gb relative inline-block rounded-md p-px overflow-hidden">
+              <span
+                className="absolute -inset-full opacity-0 group-hover/gb:opacity-100 group-active/gb:opacity-100 transition-opacity duration-500 animate-spin-border pointer-events-none"
+                style={{
+                  backgroundImage:
+                    "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))",
+                }}
+              />
+              <a
+                href="/api/resume"
+                download
+                className="relative inline-flex items-center gap-1.5 text-xs px-3 sm:px-4 py-2 bg-black border border-zinc-700 hover:border-transparent active:border-transparent hover:bg-zinc-800 active:bg-zinc-800 hover:-translate-y-0.5 active:-translate-y-0.5 transition-all duration-200 rounded-md text-zinc-300"
+              >
+                <FileDown size={13} /> Resume
+              </a>
+            </span>
             <a
               href="#contact"
               onClick={(e) => {
@@ -673,15 +691,24 @@ export default function Portfolio() {
             >
               Contact
             </a>
-            <button
-              type="button"
-              onClick={() => setMobileOpen((v) => !v)}
-              aria-label="Toggle navigation menu"
-              aria-expanded={mobileOpen}
-              className="sm:hidden w-9 h-9 flex items-center justify-center border border-zinc-700 hover:border-zinc-400 hover:bg-zinc-800 hover:-translate-y-0.5 transition-all duration-200 rounded-md text-zinc-300"
-            >
-              {mobileOpen ? <X size={16} /> : <Menu size={16} />}
-            </button>
+            <span className="group/gb relative inline-block rounded-md p-px overflow-hidden sm:hidden">
+              <span
+                className="absolute -inset-full opacity-0 group-hover/gb:opacity-100 group-active/gb:opacity-100 transition-opacity duration-500 animate-spin-border pointer-events-none"
+                style={{
+                  backgroundImage:
+                    "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))",
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setMobileOpen((v) => !v)}
+                aria-label="Toggle navigation menu"
+                aria-expanded={mobileOpen}
+                className="relative w-9 h-9 flex items-center justify-center bg-black border border-zinc-700 hover:border-transparent active:border-transparent hover:bg-zinc-800 active:bg-zinc-800 hover:-translate-y-0.5 active:-translate-y-0.5 transition-all duration-200 rounded-md text-zinc-300"
+              >
+                {mobileOpen ? <X size={16} /> : <Menu size={16} />}
+              </button>
+            </span>
           </div>
         </div>
 
@@ -760,20 +787,29 @@ export default function Portfolio() {
             className="flex flex-wrap gap-3 mb-12 animate-fade-up"
             style={{ animationDelay: "320ms" }}
           >
-            <a
-              href="#projects"
-              onClick={(e) => {
-                e.preventDefault();
-                scrollToSection("projects");
-              }}
-              className="group flex items-center gap-2 px-5 py-2.5 border border-zinc-700 text-sm hover:border-zinc-400 hover:-translate-y-0.5 transition-all duration-200 rounded-md"
-            >
-              View projects{" "}
-              <ArrowRight
-                size={14}
-                className="transition-transform duration-200 group-hover:translate-x-1"
+            <span className="group/gb relative inline-block rounded-md p-px overflow-hidden">
+              <span
+                className="absolute -inset-full opacity-0 group-hover/gb:opacity-100 group-active/gb:opacity-100 transition-opacity duration-500 animate-spin-border pointer-events-none"
+                style={{
+                  backgroundImage:
+                    "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))",
+                }}
               />
-            </a>
+              <a
+                href="#projects"
+                onClick={(e) => {
+                  e.preventDefault();
+                  scrollToSection("projects");
+                }}
+                className="relative group flex items-center gap-2 px-5 py-2.5 bg-black border border-zinc-700 hover:border-transparent active:border-transparent text-sm hover:-translate-y-0.5 active:-translate-y-0.5 transition-all duration-200 rounded-md"
+              >
+                View projects{" "}
+                <ArrowRight
+                  size={14}
+                  className="transition-transform duration-200 group-hover:translate-x-1 group-active:translate-x-1"
+                />
+              </a>
+            </span>
             <a
               href="#contact"
               onClick={(e) => {
@@ -923,7 +959,16 @@ export default function Portfolio() {
             )}
           </Reveal>
           <Reveal>
-            <SkillInstaller />
+            <div className="group relative rounded-lg p-px overflow-hidden transition-all duration-300 hover:-translate-y-1 active:-translate-y-1 hover:shadow-lg active:shadow-lg hover:shadow-black/40 active:shadow-black/40">
+              <div
+                className="absolute -inset-full opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-500 animate-spin-border pointer-events-none"
+                style={{
+                  backgroundImage:
+                    "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))",
+                }}
+              />
+              <SkillInstaller />
+            </div>
           </Reveal>
         </section>
 
@@ -947,17 +992,17 @@ export default function Portfolio() {
               return (
                 <Reveal key={p.name} delay={i * 130}>
                   {(visible) => (
-                    <div className="group relative rounded-lg p-px overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/40">
+                    <div className="group relative rounded-lg p-px overflow-hidden transition-all duration-300 hover:-translate-y-1 active:-translate-y-1 hover:shadow-lg active:shadow-lg hover:shadow-black/40 active:shadow-black/40">
                       <div
-                        className="absolute -inset-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-spin-border"
+                        className="absolute -inset-full opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-500 animate-spin-border"
                         style={{
                           backgroundImage:
                             "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))",
                         }}
                       />
-                      <div className="relative bg-zinc-950 border border-zinc-800 group-hover:border-transparent transition-colors duration-300 rounded-lg overflow-hidden">
+                      <div className="relative bg-zinc-950 border border-zinc-800 group-hover:border-transparent group-active:border-transparent transition-colors duration-300 rounded-lg overflow-hidden">
                         <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
-                          <div className="absolute inset-y-0 -left-1/2 w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[400%] transition-transform duration-1000 ease-out" />
+                          <div className="absolute inset-y-0 -left-1/2 w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[400%] group-active:translate-x-[400%] transition-transform duration-1000 ease-out" />
                         </div>
                         <TermBar path={`~/projects/${p.name.toLowerCase().replace(/\s+/g, "")}`} />
                         <div className="p-5 sm:p-6">
@@ -1037,77 +1082,91 @@ export default function Portfolio() {
               </div>
             )}
           </Reveal>
-          <div className="border border-zinc-800 bg-zinc-950 divide-y divide-zinc-900 rounded-lg overflow-hidden">
+          <div className="flex flex-col gap-6">
             {EXPERIENCE.map((item, i) => {
               const a = ACCENT[item.accent];
               return (
                 <Reveal key={item.role} delay={i * 120}>
                   {(visible) => (
-                    <div className="p-5 sm:p-6 transition-colors duration-200 hover:bg-zinc-900">
-                      <div className="flex flex-wrap items-start justify-between gap-2 mb-1">
-                        <h3 className="font-bold text-base">{item.role}</h3>
-                        <div className="flex items-center gap-3 shrink-0">
-                          <span className="text-xs text-zinc-600">{item.date}</span>
-                          {item.tag && (
-                            <span className={`flex items-center gap-1.5 text-xs ${a.text}`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${a.dot} animate-soft-glow`} />
-                              {item.tag}
-                            </span>
+                    <div className="group relative rounded-lg p-px overflow-hidden transition-all duration-300 hover:-translate-y-1 active:-translate-y-1 hover:shadow-lg active:shadow-lg hover:shadow-black/40 active:shadow-black/40">
+                      <div
+                        className="absolute -inset-full opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-500 animate-spin-border"
+                        style={{
+                          backgroundImage:
+                            "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))",
+                        }}
+                      />
+                      <div className="relative bg-zinc-950 border border-zinc-800 group-hover:border-transparent group-active:border-transparent transition-colors duration-300 rounded-lg overflow-hidden">
+                        <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
+                          <div className="absolute inset-y-0 -left-1/2 w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[400%] group-active:translate-x-[400%] transition-transform duration-1000 ease-out" />
+                        </div>
+                        <div className="p-5 sm:p-6 transition-colors duration-200 group-hover:bg-zinc-900">
+                          <div className="flex flex-wrap items-start justify-between gap-2 mb-1">
+                            <h3 className="font-bold text-base">{item.role}</h3>
+                            <div className="flex items-center gap-3 shrink-0">
+                              <span className="text-xs text-zinc-600">{item.date}</span>
+                              {item.tag && (
+                                <span className={`flex items-center gap-1.5 text-xs ${a.text}`}>
+                                  <span className={`w-1.5 h-1.5 rounded-full ${a.dot} animate-soft-glow`} />
+                                  {item.tag}
+                                </span>
+                              )}
+                              {item.live && (
+                                <a
+                                  href={item.live}
+                                  aria-label={`${item.org} live link`}
+                                  className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125"
+                                >
+                                  <ExternalLink size={15} />
+                                </a>
+                              )}
+                              {item.github && (
+                                <a
+                                  href={item.github}
+                                  aria-label={`${item.org} on GitHub`}
+                                  className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125"
+                                >
+                                  <Github size={15} />
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                          <div className={`text-sm font-semibold mb-2 ${a.text}`}>{item.org}</div>
+                          <p className="text-sm text-zinc-500 leading-relaxed max-w-2xl mb-4">
+                            {item.desc}
+                          </p>
+                          {item.metrics && item.metrics.length > 0 && (
+                            <div className="flex flex-wrap gap-6 mb-4 pb-4 border-b border-zinc-900">
+                              {item.metrics.map((m, mi) => (
+                                <div key={mi} className="flex flex-col">
+                                  <div className={`text-lg sm:text-xl font-bold ${a.text}`}>
+                                    {visible ? (
+                                      <CountUp target={m.value} suffix={m.suffix} />
+                                    ) : (
+                                      "0"
+                                    )}
+                                  </div>
+                                  <div className="text-[10px] sm:text-[11px] text-zinc-500 mt-0.5">
+                                    {m.label}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
                           )}
-                          {item.live && (
-                            <a
-                              href={item.live}
-                              aria-label={`${item.org} live link`}
-                              className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125"
-                            >
-                              <ExternalLink size={15} />
-                            </a>
-                          )}
-                          {item.github && (
-                            <a
-                              href={item.github}
-                              aria-label={`${item.org} on GitHub`}
-                              className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125"
-                            >
-                              <Github size={15} />
-                            </a>
+                          {item.stack && item.stack.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {item.stack.map((s) => (
+                                <span
+                                  key={s}
+                                  className="text-[11px] px-2.5 py-1 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-full transition-colors duration-200 hover:border-zinc-600 hover:text-zinc-200"
+                                >
+                                  {s}
+                                </span>
+                              ))}
+                            </div>
                           )}
                         </div>
                       </div>
-                      <div className={`text-sm font-semibold mb-2 ${a.text}`}>{item.org}</div>
-                      <p className="text-sm text-zinc-500 leading-relaxed max-w-2xl mb-4">
-                        {item.desc}
-                      </p>
-                      {item.metrics && item.metrics.length > 0 && (
-                        <div className="flex flex-wrap gap-6 mb-4 pb-4 border-b border-zinc-900">
-                          {item.metrics.map((m, mi) => (
-                            <div key={mi} className="flex flex-col">
-                              <div className={`text-lg sm:text-xl font-bold ${a.text}`}>
-                                {visible ? (
-                                  <CountUp target={m.value} suffix={m.suffix} />
-                                ) : (
-                                  "0"
-                                )}
-                              </div>
-                              <div className="text-[10px] sm:text-[11px] text-zinc-500 mt-0.5">
-                                {m.label}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {item.stack && item.stack.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {item.stack.map((s) => (
-                            <span
-                              key={s}
-                              className="text-[11px] px-2.5 py-1 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-full transition-colors duration-200 hover:border-zinc-600 hover:text-zinc-200"
-                            >
-                              {s}
-                            </span>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   )}
                 </Reveal>
@@ -1130,29 +1189,43 @@ export default function Portfolio() {
           <div className="grid sm:grid-cols-2 gap-6">
             <div>
               <div className="text-xs text-zinc-600 mb-3 tracking-wide">Certifications</div>
-              <div className="border border-zinc-800 bg-zinc-950 divide-y divide-zinc-900 rounded-lg overflow-hidden">
+              <div className="flex flex-col gap-3">
                 {CERTIFICATIONS.map((c, i) => (
                   <Reveal key={c.title} delay={i * 120}>
-                    <div className="p-4 sm:p-5 transition-colors duration-200 hover:bg-zinc-900 group/cert">
-                      <div className="flex items-start gap-3">
-                        <Award
-                          size={16}
-                          className="text-emerald-400 mt-0.5 shrink-0 transition-transform duration-200 group-hover/cert:scale-110 group-hover/cert:rotate-3"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-sm">{c.title}</div>
-                          <div className="text-xs text-zinc-500 mt-0.5">{c.issuer}</div>
-                          <div className="text-[11px] text-emerald-400 mt-1">{c.badge}</div>
+                    <div className="group relative rounded-lg p-px overflow-hidden transition-all duration-300 hover:-translate-y-1 active:-translate-y-1 hover:shadow-lg active:shadow-lg hover:shadow-black/40 active:shadow-black/40">
+                      <div
+                        className="absolute -inset-full opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-500 animate-spin-border"
+                        style={{
+                          backgroundImage:
+                            "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))",
+                        }}
+                      />
+                      <div className="relative bg-zinc-950 border border-zinc-800 group-hover:border-transparent group-active:border-transparent transition-colors duration-300 rounded-lg overflow-hidden">
+                        <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
+                          <div className="absolute inset-y-0 -left-1/2 w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[400%] group-active:translate-x-[400%] transition-transform duration-1000 ease-out" />
                         </div>
-                        <a
-                          href={c.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label={`${c.title} certificate`}
-                          className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125 shrink-0"
-                        >
-                          <FileDown size={15} />
-                        </a>
+                        <div className="p-4 sm:p-5 transition-colors duration-200 group-hover:bg-zinc-900">
+                          <div className="flex items-start gap-3">
+                            <Award
+                              size={16}
+                              className="text-emerald-400 mt-0.5 shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-3"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-sm">{c.title}</div>
+                              <div className="text-xs text-zinc-500 mt-0.5">{c.issuer}</div>
+                              <div className="text-[11px] text-emerald-400 mt-1">{c.badge}</div>
+                            </div>
+                            <a
+                              href={c.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={`${c.title} certificate`}
+                              className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125 shrink-0"
+                            >
+                              <FileDown size={15} />
+                            </a>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </Reveal>
@@ -1162,28 +1235,42 @@ export default function Portfolio() {
 
             <div>
               <div className="text-xs text-zinc-600 mb-3 tracking-wide">Achievements</div>
-              <div className="border border-zinc-800 bg-zinc-950 divide-y divide-zinc-900 rounded-lg overflow-hidden">
+              <div className="flex flex-col gap-3">
                 {ACHIEVEMENTS.map((ach, i) => (
                   <Reveal key={ach.title} delay={i * 120}>
-                    <div className="p-4 sm:p-5 transition-colors duration-200 hover:bg-zinc-900 group/ach">
-                      <div className="flex items-start gap-3">
-                        <Award
-                          size={16}
-                          className="text-violet-400 mt-0.5 shrink-0 transition-transform duration-200 group-hover/ach:scale-110 group-hover/ach:rotate-3"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-sm">{ach.title}</div>
-                          <div className="text-xs text-zinc-500 mt-0.5">{ach.detail}</div>
+                    <div className="group relative rounded-lg p-px overflow-hidden transition-all duration-300 hover:-translate-y-1 active:-translate-y-1 hover:shadow-lg active:shadow-lg hover:shadow-black/40 active:shadow-black/40">
+                      <div
+                        className="absolute -inset-full opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-500 animate-spin-border"
+                        style={{
+                          backgroundImage:
+                            "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))",
+                        }}
+                      />
+                      <div className="relative bg-zinc-950 border border-zinc-800 group-hover:border-transparent group-active:border-transparent transition-colors duration-300 rounded-lg overflow-hidden">
+                        <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
+                          <div className="absolute inset-y-0 -left-1/2 w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[400%] group-active:translate-x-[400%] transition-transform duration-1000 ease-out" />
                         </div>
-                        <a
-                          href={ach.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label={ach.linkLabel}
-                          className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125 shrink-0"
-                        >
-                          <ExternalLink size={15} />
-                        </a>
+                        <div className="p-4 sm:p-5 transition-colors duration-200 group-hover:bg-zinc-900">
+                          <div className="flex items-start gap-3">
+                            <Award
+                              size={16}
+                              className="text-violet-400 mt-0.5 shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-3"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-sm">{ach.title}</div>
+                              <div className="text-xs text-zinc-500 mt-0.5">{ach.detail}</div>
+                            </div>
+                            <a
+                              href={ach.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={ach.linkLabel}
+                              className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125 shrink-0"
+                            >
+                              <ExternalLink size={15} />
+                            </a>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </Reveal>
@@ -1217,25 +1304,52 @@ export default function Portfolio() {
               >
                 <Mail size={14} /> Email
               </a>
-              <a
-                href="https://github.com/arbazansari7933"
-                className="flex items-center gap-2 px-5 py-2.5 border border-zinc-700 text-sm hover:border-zinc-400 hover:-translate-y-0.5 transition-all duration-200 rounded-md"
-              >
-                <Github size={14} /> GitHub
-              </a>
-              <a
-                href="https://www.linkedin.com/in/arbazansari7934"
-                className="flex items-center gap-2 px-5 py-2.5 border border-zinc-700 text-sm hover:border-zinc-400 hover:-translate-y-0.5 transition-all duration-200 rounded-md"
-              >
-                <Linkedin size={14} /> LinkedIn
-              </a>
-              <a
-                href="/api/resume"
-                download
-                className="flex items-center gap-2 px-5 py-2.5 border border-zinc-700 text-sm hover:border-zinc-400 hover:-translate-y-0.5 transition-all duration-200 rounded-md"
-              >
-                <FileDown size={14} /> Resume
-              </a>
+              <span className="group/gb relative inline-block rounded-md p-px overflow-hidden">
+                <span
+                  className="absolute -inset-full opacity-0 group-hover/gb:opacity-100 group-active/gb:opacity-100 transition-opacity duration-500 animate-spin-border pointer-events-none"
+                  style={{
+                    backgroundImage:
+                      "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))",
+                  }}
+                />
+                <a
+                  href="https://github.com/arbazansari7933"
+                  className="relative flex items-center gap-2 px-5 py-2.5 bg-black border border-zinc-700 hover:border-transparent active:border-transparent text-sm hover:-translate-y-0.5 active:-translate-y-0.5 transition-all duration-200 rounded-md"
+                >
+                  <Github size={14} /> GitHub
+                </a>
+              </span>
+              <span className="group/gb relative inline-block rounded-md p-px overflow-hidden">
+                <span
+                  className="absolute -inset-full opacity-0 group-hover/gb:opacity-100 group-active/gb:opacity-100 transition-opacity duration-500 animate-spin-border pointer-events-none"
+                  style={{
+                    backgroundImage:
+                      "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))",
+                  }}
+                />
+                <a
+                  href="https://www.linkedin.com/in/arbazansari7934"
+                  className="relative flex items-center gap-2 px-5 py-2.5 bg-black border border-zinc-700 hover:border-transparent active:border-transparent text-sm hover:-translate-y-0.5 active:-translate-y-0.5 transition-all duration-200 rounded-md"
+                >
+                  <Linkedin size={14} /> LinkedIn
+                </a>
+              </span>
+              <span className="group/gb relative inline-block rounded-md p-px overflow-hidden">
+                <span
+                  className="absolute -inset-full opacity-0 group-hover/gb:opacity-100 group-active/gb:opacity-100 transition-opacity duration-500 animate-spin-border pointer-events-none"
+                  style={{
+                    backgroundImage:
+                      "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))",
+                  }}
+                />
+                <a
+                  href="/api/resume"
+                  download
+                  className="relative flex items-center gap-2 px-5 py-2.5 bg-black border border-zinc-700 hover:border-transparent active:border-transparent text-sm hover:-translate-y-0.5 active:-translate-y-0.5 transition-all duration-200 rounded-md"
+                >
+                  <FileDown size={14} /> Resume
+                </a>
+              </span>
             </div>
           </Reveal>
         </section>
