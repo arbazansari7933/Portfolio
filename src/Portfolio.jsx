@@ -121,6 +121,9 @@ const GRADIENT_BTN_STYLE = {
 const GRADIENT_BTN_CLASS =
   "text-white font-semibold rounded-md transition-all duration-200 hover:opacity-90 hover:-translate-y-0.5";
 
+const GRADIENT_RING_IMAGE =
+  "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))";
+
 /* ---------- Reveal: scroll-triggered fade+slide-in wrapper ---------- */
 function Reveal({ children, delay = 0, className = "" }) {
   const ref = useRef(null);
@@ -154,6 +157,140 @@ function Reveal({ children, delay = 0, className = "" }) {
     >
       {typeof children === "function" ? children(visible) : children}
     </div>
+  );
+}
+
+/* ---------- useTapHold: keeps a "tapped" state true for a fixed duration
+   regardless of how briefly the actual tap/click lasted. This is what makes
+   the gradient-ring effect reliably visible on mobile taps, instead of
+   depending on the raw (and very short) CSS :active window. ---------- */
+function useTapHold(duration = 1400) {
+  const [tapped, setTapped] = useState(false);
+  const timeoutRef = useRef(null);
+
+  function trigger() {
+    setTapped(true);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => setTapped(false), duration);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  return [tapped, trigger];
+}
+
+/* ---------- GradientCard: SAME SentinelTicket effect on every card ---------- */
+function GradientCard({
+  id,
+  children,
+  delay = 0,
+  shine = true,
+  activeCardId,
+  setActiveCardId,
+}) {
+  const active = activeCardId === id;
+
+  const activateCard = () => {
+    setActiveCardId(id);
+  };
+
+  const handlePointerEnter = (e) => {
+    // Mouse/pen hover: entering another card immediately switches the effect.
+    if (e.pointerType !== "touch") {
+      setActiveCardId(id);
+    }
+  };
+
+  return (
+    <Reveal delay={delay}>
+      {(visible) => (
+        <div
+          data-gradient-card="true"
+          onPointerDown={activateCard}
+          onPointerEnter={handlePointerEnter}
+          className={`group relative rounded-lg p-px overflow-hidden transition-all duration-300 ${
+            active
+              ? "-translate-y-1 shadow-lg shadow-black/40"
+              : "hover:-translate-y-1 hover:shadow-lg hover:shadow-black/40"
+          }`}
+        >
+          {/* SAME rotating border used by SentinelTicket */}
+          <div
+            className={`absolute -inset-full transition-opacity duration-500 animate-spin-border pointer-events-none ${
+              active ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+            }`}
+            style={{ backgroundImage: GRADIENT_RING_IMAGE }}
+          />
+
+          {/* SAME inner card styling */}
+          <div
+            className={`relative bg-zinc-950 border border-zinc-800 rounded-lg overflow-hidden transition-colors duration-300 ${
+              active ? "border-transparent" : "group-hover:border-transparent"
+            }`}
+          >
+            {/* SAME shine animation */}
+            {shine && (
+              <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
+                <div
+                  className={`absolute inset-y-0 -left-1/2 w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 -translate-x-full transition-transform duration-1000 ease-out ${
+                    active ? "translate-x-[400%]" : "group-hover:translate-x-[400%]"
+                  }`}
+                />
+              </div>
+            )}
+
+            {typeof children === "function"
+              ? children(visible, active)
+              : children}
+          </div>
+        </div>
+      )}
+    </Reveal>
+  );
+}
+
+/* ---------- GradientButton: border-only rotating gradient ring for plain
+   outline buttons (no shine). children can be a plain node or a function
+   receiving (tapped), useful for elements like an arrow icon that also
+   needs to react to the tap. ---------- */
+function GradientButton({
+  as: As = "a",
+  fill = false,
+  className = "",
+  innerClassName = "",
+  onClick,
+  children,
+  ...props
+}) {
+  const [tapped, trigger] = useTapHold(5000);
+
+  function handleClick(e) {
+    trigger();
+    if (onClick) onClick(e);
+  }
+
+  return (
+    <span className={`group/gb relative inline-block rounded-md p-px overflow-hidden ${className}`}>
+      <span
+        className={`absolute -inset-full opacity-0 group-hover/gb:opacity-100 transition-opacity duration-500 animate-spin-border pointer-events-none ${
+          tapped ? "opacity-100" : ""
+        }`}
+        style={{ backgroundImage: GRADIENT_RING_IMAGE }}
+      />
+      <As
+        {...props}
+        onClick={handleClick}
+        className={`relative bg-black border border-zinc-700 transition-all duration-200 rounded-md hover:border-transparent hover:-translate-y-0.5 ${
+          fill ? "hover:bg-zinc-800" : ""
+        } ${tapped ? `border-transparent -translate-y-0.5 ${fill ? "bg-zinc-800" : ""}` : ""} ${innerClassName}`}
+      >
+        {typeof children === "function" ? children(tapped) : children}
+      </As>
+    </span>
   );
 }
 
@@ -207,7 +344,6 @@ function SectionAccent({ visible, className = "" }) {
     />
   );
 }
-
 
 /* ---------- ScrollProgress: thin bar tracking page scroll ---------- */
 function ScrollProgress() {
@@ -286,7 +422,6 @@ function Typewriter({ text, speed = 70, startDelay = 300 }) {
   );
 }
 
-
 /* ---------- CustomCursor: replaces default pointer on larger screens ---------- */
 function CustomCursor() {
   const [pos, setPos] = useState({ x: -100, y: -100 });
@@ -319,7 +454,6 @@ function CustomCursor() {
     </div>
   );
 }
-
 
 function TermBar({ path, dot1 = "bg-red-500", dot2 = "bg-amber-500", dot3 = "bg-emerald-500" }) {
   return (
@@ -394,10 +528,7 @@ function SkillInstaller() {
   }
 
   return (
-    <div
-      ref={sectionRef}
-      className="relative border border-zinc-800 bg-zinc-950 rounded-lg overflow-hidden group-hover:border-transparent group-active:border-transparent transition-colors duration-300"
-    >
+    <div ref={sectionRef}>
       <TermBar path="~/stack" />
       <div className="p-5 sm:p-6 font-mono text-sm">
         <div className="text-zinc-600 mb-4">$ npm install skills</div>
@@ -593,6 +724,21 @@ function scrollToSection(id) {
 
 export default function Portfolio() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeCardId, setActiveCardId] = useState(null);
+
+  // Clicking/tapping anywhere outside a card removes the active effect.
+  useEffect(() => {
+    const handleOutsidePointer = (e) => {
+      if (!e.target.closest('[data-gradient-card="true"]')) {
+        setActiveCardId(null);
+      }
+    };
+
+    document.addEventListener("pointerdown", handleOutsidePointer);
+    return () => {
+      document.removeEventListener("pointerdown", handleOutsidePointer);
+    };
+  }, []);
   const [activeSection, setActiveSection] = useState("");
   const ripple = useRipple();
 
@@ -663,22 +809,14 @@ export default function Portfolio() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <span className="group/gb relative inline-block rounded-md p-px overflow-hidden">
-              <span
-                className="absolute -inset-full opacity-0 group-hover/gb:opacity-100 group-active/gb:opacity-100 transition-opacity duration-500 animate-spin-border pointer-events-none"
-                style={{
-                  backgroundImage:
-                    "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))",
-                }}
-              />
-              <a
-                href="/api/resume"
-                download
-                className="relative inline-flex items-center gap-1.5 text-xs px-3 sm:px-4 py-2 bg-black border border-zinc-700 hover:border-transparent active:border-transparent hover:bg-zinc-800 active:bg-zinc-800 hover:-translate-y-0.5 active:-translate-y-0.5 transition-all duration-200 rounded-md text-zinc-300"
-              >
-                <FileDown size={13} /> Resume
-              </a>
-            </span>
+            <GradientButton
+              href="/api/resume"
+              download
+              fill
+              innerClassName="inline-flex items-center gap-1.5 text-xs px-3 sm:px-4 py-2 text-zinc-300"
+            >
+              <FileDown size={13} /> Resume
+            </GradientButton>
             <a
               href="#contact"
               onClick={(e) => {
@@ -691,24 +829,18 @@ export default function Portfolio() {
             >
               Contact
             </a>
-            <span className="group/gb relative inline-block rounded-md p-px overflow-hidden sm:hidden">
-              <span
-                className="absolute -inset-full opacity-0 group-hover/gb:opacity-100 group-active/gb:opacity-100 transition-opacity duration-500 animate-spin-border pointer-events-none"
-                style={{
-                  backgroundImage:
-                    "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))",
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setMobileOpen((v) => !v)}
-                aria-label="Toggle navigation menu"
-                aria-expanded={mobileOpen}
-                className="relative w-9 h-9 flex items-center justify-center bg-black border border-zinc-700 hover:border-transparent active:border-transparent hover:bg-zinc-800 active:bg-zinc-800 hover:-translate-y-0.5 active:-translate-y-0.5 transition-all duration-200 rounded-md text-zinc-300"
-              >
-                {mobileOpen ? <X size={16} /> : <Menu size={16} />}
-              </button>
-            </span>
+            <GradientButton
+              as="button"
+              type="button"
+              fill
+              className="sm:hidden"
+              innerClassName="w-9 h-9 flex items-center justify-center text-zinc-300"
+              onClick={() => setMobileOpen((v) => !v)}
+              aria-label="Toggle navigation menu"
+              aria-expanded={mobileOpen}
+            >
+              {mobileOpen ? <X size={16} /> : <Menu size={16} />}
+            </GradientButton>
           </div>
         </div>
 
@@ -787,29 +919,26 @@ export default function Portfolio() {
             className="flex flex-wrap gap-3 mb-12 animate-fade-up"
             style={{ animationDelay: "320ms" }}
           >
-            <span className="group/gb relative inline-block rounded-md p-px overflow-hidden">
-              <span
-                className="absolute -inset-full opacity-0 group-hover/gb:opacity-100 group-active/gb:opacity-100 transition-opacity duration-500 animate-spin-border pointer-events-none"
-                style={{
-                  backgroundImage:
-                    "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))",
-                }}
-              />
-              <a
-                href="#projects"
-                onClick={(e) => {
-                  e.preventDefault();
-                  scrollToSection("projects");
-                }}
-                className="relative group flex items-center gap-2 px-5 py-2.5 bg-black border border-zinc-700 hover:border-transparent active:border-transparent text-sm hover:-translate-y-0.5 active:-translate-y-0.5 transition-all duration-200 rounded-md"
-              >
-                View projects{" "}
-                <ArrowRight
-                  size={14}
-                  className="transition-transform duration-200 group-hover:translate-x-1 group-active:translate-x-1"
-                />
-              </a>
-            </span>
+            <GradientButton
+              href="#projects"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection("projects");
+              }}
+              innerClassName="group flex items-center gap-2 px-5 py-2.5 text-sm"
+            >
+              {(tapped) => (
+                <>
+                  View projects{" "}
+                  <ArrowRight
+                    size={14}
+                    className={`transition-transform duration-200 group-hover:translate-x-1 ${
+                      tapped ? "translate-x-1" : ""
+                    }`}
+                  />
+                </>
+              )}
+            </GradientButton>
             <a
               href="#contact"
               onClick={(e) => {
@@ -958,18 +1087,14 @@ export default function Portfolio() {
               </div>
             )}
           </Reveal>
-          <Reveal>
-            <div className="group relative rounded-lg p-px overflow-hidden transition-all duration-300 hover:-translate-y-1 active:-translate-y-1 hover:shadow-lg active:shadow-lg hover:shadow-black/40 active:shadow-black/40">
-              <div
-                className="absolute -inset-full opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-500 animate-spin-border pointer-events-none"
-                style={{
-                  backgroundImage:
-                    "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))",
-                }}
-              />
-              <SkillInstaller />
-            </div>
-          </Reveal>
+          <GradientCard
+            id="skills"
+            shine={false}
+            activeCardId={activeCardId}
+            setActiveCardId={setActiveCardId}
+          >
+            <SkillInstaller />
+          </GradientCard>
         </section>
 
         {/* PROJECTS */}
@@ -990,83 +1115,77 @@ export default function Portfolio() {
             {PROJECTS.map((p, i) => {
               const a = ACCENT[p.accent];
               return (
-                <Reveal key={p.name} delay={i * 130}>
+                <GradientCard
+                  id={`project-${i}`}
+                  key={p.name}
+                  delay={i * 130}
+                  activeCardId={activeCardId}
+                  setActiveCardId={setActiveCardId}
+                >
                   {(visible) => (
-                    <div className="group relative rounded-lg p-px overflow-hidden transition-all duration-300 hover:-translate-y-1 active:-translate-y-1 hover:shadow-lg active:shadow-lg hover:shadow-black/40 active:shadow-black/40">
-                      <div
-                        className="absolute -inset-full opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-500 animate-spin-border"
-                        style={{
-                          backgroundImage:
-                            "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))",
-                        }}
-                      />
-                      <div className="relative bg-zinc-950 border border-zinc-800 group-hover:border-transparent group-active:border-transparent transition-colors duration-300 rounded-lg overflow-hidden">
-                        <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
-                          <div className="absolute inset-y-0 -left-1/2 w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[400%] group-active:translate-x-[400%] transition-transform duration-1000 ease-out" />
-                        </div>
-                        <TermBar path={`~/projects/${p.name.toLowerCase().replace(/\s+/g, "")}`} />
-                        <div className="p-5 sm:p-6">
-                          <div className="flex items-start justify-between gap-3 mb-3">
-                            <h3 className="text-base sm:text-lg font-bold">{p.name}</h3>
-                            <div className="flex items-center gap-3 shrink-0 pt-0.5">
-                              <span className={`flex items-center gap-1.5 text-xs ${a.text}`}>
-                                <span className={`w-1.5 h-1.5 rounded-full ${a.dot} animate-soft-glow`} />
-                                {p.tag}
-                              </span>
-                              {p.live && (
-                                <a
-                                  href={p.live}
-                                  aria-label={`${p.name} live link`}
-                                  className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125"
-                                >
-                                  <ExternalLink size={15} />
-                                </a>
-                              )}
+                    <>
+                      <TermBar path={`~/projects/${p.name.toLowerCase().replace(/\s+/g, "")}`} />
+                      <div className="p-5 sm:p-6">
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <h3 className="text-base sm:text-lg font-bold">{p.name}</h3>
+                          <div className="flex items-center gap-3 shrink-0 pt-0.5">
+                            <span className={`flex items-center gap-1.5 text-xs ${a.text}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${a.dot} animate-soft-glow`} />
+                              {p.tag}
+                            </span>
+                            {p.live && (
                               <a
-                                href={p.github}
-                                aria-label={`${p.name} on GitHub`}
+                                href={p.live}
+                                aria-label={`${p.name} live link`}
                                 className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125"
                               >
-                                <Github size={15} />
+                                <ExternalLink size={15} />
                               </a>
-                            </div>
-                          </div>
-                          <p className="text-sm text-zinc-500 leading-relaxed mb-4 max-w-2xl">
-                            {p.desc}
-                          </p>
-                          {p.metrics.length > 0 && (
-                            <div className="flex flex-wrap gap-6 mb-4 pb-4 border-b border-zinc-900">
-                              {p.metrics.map((m, mi) => (
-                                <div key={mi} className="flex flex-col">
-                                  <div className={`text-lg sm:text-xl font-bold ${a.text}`}>
-                                    {visible ? (
-                                      <CountUp target={m.value} suffix={m.suffix} />
-                                    ) : (
-                                      "0"
-                                    )}
-                                  </div>
-                                  <div className="text-[10px] sm:text-[11px] text-zinc-500 mt-0.5">
-                                    {m.label}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          <div className="flex flex-wrap gap-2 pt-4 border-t border-zinc-900">
-                            {p.stack.map((s) => (
-                              <span
-                                key={s}
-                                className="text-[11px] px-2.5 py-1 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-full transition-colors duration-200 hover:border-zinc-600 hover:text-zinc-200"
-                              >
-                                {s}
-                              </span>
-                            ))}
+                            )}
+                            <a
+                              href={p.github}
+                              aria-label={`${p.name} on GitHub`}
+                              className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125"
+                            >
+                              <Github size={15} />
+                            </a>
                           </div>
                         </div>
+                        <p className="text-sm text-zinc-500 leading-relaxed mb-4 max-w-2xl">
+                          {p.desc}
+                        </p>
+                        {p.metrics.length > 0 && (
+                          <div className="flex flex-wrap gap-6 mb-4 pb-4 border-b border-zinc-900">
+                            {p.metrics.map((m, mi) => (
+                              <div key={mi} className="flex flex-col">
+                                <div className={`text-lg sm:text-xl font-bold ${a.text}`}>
+                                  {visible ? (
+                                    <CountUp target={m.value} suffix={m.suffix} />
+                                  ) : (
+                                    "0"
+                                  )}
+                                </div>
+                                <div className="text-[10px] sm:text-[11px] text-zinc-500 mt-0.5">
+                                  {m.label}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex flex-wrap gap-2 pt-4 border-t border-zinc-900">
+                          {p.stack.map((s) => (
+                            <span
+                              key={s}
+                              className="text-[11px] px-2.5 py-1 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-full transition-colors duration-200 hover:border-zinc-600 hover:text-zinc-200"
+                            >
+                              {s}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    </>
                   )}
-                </Reveal>
+                </GradientCard>
               );
             })}
           </div>
@@ -1086,90 +1205,86 @@ export default function Portfolio() {
             {EXPERIENCE.map((item, i) => {
               const a = ACCENT[item.accent];
               return (
-                <Reveal key={item.role} delay={i * 120}>
-                  {(visible) => (
-                    <div className="group relative rounded-lg p-px overflow-hidden transition-all duration-300 hover:-translate-y-1 active:-translate-y-1 hover:shadow-lg active:shadow-lg hover:shadow-black/40 active:shadow-black/40">
-                      <div
-                        className="absolute -inset-full opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-500 animate-spin-border"
-                        style={{
-                          backgroundImage:
-                            "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))",
-                        }}
-                      />
-                      <div className="relative bg-zinc-950 border border-zinc-800 group-hover:border-transparent group-active:border-transparent transition-colors duration-300 rounded-lg overflow-hidden">
-                        <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
-                          <div className="absolute inset-y-0 -left-1/2 w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[400%] group-active:translate-x-[400%] transition-transform duration-1000 ease-out" />
-                        </div>
-                        <div className="p-5 sm:p-6 transition-colors duration-200 group-hover:bg-zinc-900">
-                          <div className="flex flex-wrap items-start justify-between gap-2 mb-1">
-                            <h3 className="font-bold text-base">{item.role}</h3>
-                            <div className="flex items-center gap-3 shrink-0">
-                              <span className="text-xs text-zinc-600">{item.date}</span>
-                              {item.tag && (
-                                <span className={`flex items-center gap-1.5 text-xs ${a.text}`}>
-                                  <span className={`w-1.5 h-1.5 rounded-full ${a.dot} animate-soft-glow`} />
-                                  {item.tag}
-                                </span>
-                              )}
-                              {item.live && (
-                                <a
-                                  href={item.live}
-                                  aria-label={`${item.org} live link`}
-                                  className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125"
-                                >
-                                  <ExternalLink size={15} />
-                                </a>
-                              )}
-                              {item.github && (
-                                <a
-                                  href={item.github}
-                                  aria-label={`${item.org} on GitHub`}
-                                  className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125"
-                                >
-                                  <Github size={15} />
-                                </a>
-                              )}
-                            </div>
-                          </div>
-                          <div className={`text-sm font-semibold mb-2 ${a.text}`}>{item.org}</div>
-                          <p className="text-sm text-zinc-500 leading-relaxed max-w-2xl mb-4">
-                            {item.desc}
-                          </p>
-                          {item.metrics && item.metrics.length > 0 && (
-                            <div className="flex flex-wrap gap-6 mb-4 pb-4 border-b border-zinc-900">
-                              {item.metrics.map((m, mi) => (
-                                <div key={mi} className="flex flex-col">
-                                  <div className={`text-lg sm:text-xl font-bold ${a.text}`}>
-                                    {visible ? (
-                                      <CountUp target={m.value} suffix={m.suffix} />
-                                    ) : (
-                                      "0"
-                                    )}
-                                  </div>
-                                  <div className="text-[10px] sm:text-[11px] text-zinc-500 mt-0.5">
-                                    {m.label}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
+                <GradientCard
+                  id={`experience-${i}`}
+                  key={item.role}
+                  delay={i * 120}
+                  activeCardId={activeCardId}
+                  setActiveCardId={setActiveCardId}
+                >
+                  {(visible, tapped) => (
+                    <div
+                      className={`p-5 sm:p-6 transition-colors duration-200 group-hover:bg-zinc-900 ${
+                        tapped ? "bg-zinc-900" : ""
+                      }`}
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2 mb-1">
+                        <h3 className="font-bold text-base">{item.role}</h3>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className="text-xs text-zinc-600">{item.date}</span>
+                          {item.tag && (
+                            <span className={`flex items-center gap-1.5 text-xs ${a.text}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${a.dot} animate-soft-glow`} />
+                              {item.tag}
+                            </span>
                           )}
-                          {item.stack && item.stack.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                              {item.stack.map((s) => (
-                                <span
-                                  key={s}
-                                  className="text-[11px] px-2.5 py-1 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-full transition-colors duration-200 hover:border-zinc-600 hover:text-zinc-200"
-                                >
-                                  {s}
-                                </span>
-                              ))}
-                            </div>
+                          {item.live && (
+                            <a
+                              href={item.live}
+                              aria-label={`${item.org} live link`}
+                              className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125"
+                            >
+                              <ExternalLink size={15} />
+                            </a>
+                          )}
+                          {item.github && (
+                            <a
+                              href={item.github}
+                              aria-label={`${item.org} on GitHub`}
+                              className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125"
+                            >
+                              <Github size={15} />
+                            </a>
                           )}
                         </div>
                       </div>
+                      <div className={`text-sm font-semibold mb-2 ${a.text}`}>{item.org}</div>
+                      <p className="text-sm text-zinc-500 leading-relaxed max-w-2xl mb-4">
+                        {item.desc}
+                      </p>
+                      {item.metrics && item.metrics.length > 0 && (
+                        <div className="flex flex-wrap gap-6 mb-4 pb-4 border-b border-zinc-900">
+                          {item.metrics.map((m, mi) => (
+                            <div key={mi} className="flex flex-col">
+                              <div className={`text-lg sm:text-xl font-bold ${a.text}`}>
+                                {visible ? (
+                                  <CountUp target={m.value} suffix={m.suffix} />
+                                ) : (
+                                  "0"
+                                )}
+                              </div>
+                              <div className="text-[10px] sm:text-[11px] text-zinc-500 mt-0.5">
+                                {m.label}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {item.stack && item.stack.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {item.stack.map((s) => (
+                            <span
+                              key={s}
+                              className="text-[11px] px-2.5 py-1 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-full transition-colors duration-200 hover:border-zinc-600 hover:text-zinc-200"
+                            >
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
-                </Reveal>
+                </GradientCard>
               );
             })}
           </div>
@@ -1191,44 +1306,42 @@ export default function Portfolio() {
               <div className="text-xs text-zinc-600 mb-3 tracking-wide">Certifications</div>
               <div className="flex flex-col gap-3">
                 {CERTIFICATIONS.map((c, i) => (
-                  <Reveal key={c.title} delay={i * 120}>
-                    <div className="group relative rounded-lg p-px overflow-hidden transition-all duration-300 hover:-translate-y-1 active:-translate-y-1 hover:shadow-lg active:shadow-lg hover:shadow-black/40 active:shadow-black/40">
+                  <GradientCard
+                  id={`certification-${i}`}
+                  key={c.title}
+                  delay={i * 120}
+                  activeCardId={activeCardId}
+                  setActiveCardId={setActiveCardId}
+                >
+                    {(visible, tapped) => (
                       <div
-                        className="absolute -inset-full opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-500 animate-spin-border"
-                        style={{
-                          backgroundImage:
-                            "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))",
-                        }}
-                      />
-                      <div className="relative bg-zinc-950 border border-zinc-800 group-hover:border-transparent group-active:border-transparent transition-colors duration-300 rounded-lg overflow-hidden">
-                        <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
-                          <div className="absolute inset-y-0 -left-1/2 w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[400%] group-active:translate-x-[400%] transition-transform duration-1000 ease-out" />
-                        </div>
-                        <div className="p-4 sm:p-5 transition-colors duration-200 group-hover:bg-zinc-900">
-                          <div className="flex items-start gap-3">
-                            <Award
-                              size={16}
-                              className="text-emerald-400 mt-0.5 shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-3"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <div className="font-semibold text-sm">{c.title}</div>
-                              <div className="text-xs text-zinc-500 mt-0.5">{c.issuer}</div>
-                              <div className="text-[11px] text-emerald-400 mt-1">{c.badge}</div>
-                            </div>
-                            <a
-                              href={c.link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              aria-label={`${c.title} certificate`}
-                              className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125 shrink-0"
-                            >
-                              <FileDown size={15} />
-                            </a>
+                        className={`p-4 sm:p-5 transition-colors duration-200 group-hover:bg-zinc-900 ${
+                          tapped ? "bg-zinc-900" : ""
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <Award
+                            size={16}
+                            className="text-emerald-400 mt-0.5 shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-3"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-sm">{c.title}</div>
+                            <div className="text-xs text-zinc-500 mt-0.5">{c.issuer}</div>
+                            <div className="text-[11px] text-emerald-400 mt-1">{c.badge}</div>
                           </div>
+                          <a
+                            href={c.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`${c.title} certificate`}
+                            className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125 shrink-0"
+                          >
+                            <FileDown size={15} />
+                          </a>
                         </div>
                       </div>
-                    </div>
-                  </Reveal>
+                    )}
+                  </GradientCard>
                 ))}
               </div>
             </div>
@@ -1237,43 +1350,41 @@ export default function Portfolio() {
               <div className="text-xs text-zinc-600 mb-3 tracking-wide">Achievements</div>
               <div className="flex flex-col gap-3">
                 {ACHIEVEMENTS.map((ach, i) => (
-                  <Reveal key={ach.title} delay={i * 120}>
-                    <div className="group relative rounded-lg p-px overflow-hidden transition-all duration-300 hover:-translate-y-1 active:-translate-y-1 hover:shadow-lg active:shadow-lg hover:shadow-black/40 active:shadow-black/40">
+                  <GradientCard
+                  id={`achievement-${i}`}
+                  key={ach.title}
+                  delay={i * 120}
+                  activeCardId={activeCardId}
+                  setActiveCardId={setActiveCardId}
+                >
+                    {(visible, tapped) => (
                       <div
-                        className="absolute -inset-full opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-500 animate-spin-border"
-                        style={{
-                          backgroundImage:
-                            "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))",
-                        }}
-                      />
-                      <div className="relative bg-zinc-950 border border-zinc-800 group-hover:border-transparent group-active:border-transparent transition-colors duration-300 rounded-lg overflow-hidden">
-                        <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
-                          <div className="absolute inset-y-0 -left-1/2 w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[400%] group-active:translate-x-[400%] transition-transform duration-1000 ease-out" />
-                        </div>
-                        <div className="p-4 sm:p-5 transition-colors duration-200 group-hover:bg-zinc-900">
-                          <div className="flex items-start gap-3">
-                            <Award
-                              size={16}
-                              className="text-violet-400 mt-0.5 shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-3"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <div className="font-semibold text-sm">{ach.title}</div>
-                              <div className="text-xs text-zinc-500 mt-0.5">{ach.detail}</div>
-                            </div>
-                            <a
-                              href={ach.link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              aria-label={ach.linkLabel}
-                              className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125 shrink-0"
-                            >
-                              <ExternalLink size={15} />
-                            </a>
+                        className={`p-4 sm:p-5 transition-colors duration-200 group-hover:bg-zinc-900 ${
+                          tapped ? "bg-zinc-900" : ""
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <Award
+                            size={16}
+                            className="text-violet-400 mt-0.5 shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-3"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-sm">{ach.title}</div>
+                            <div className="text-xs text-zinc-500 mt-0.5">{ach.detail}</div>
                           </div>
+                          <a
+                            href={ach.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={ach.linkLabel}
+                            className="text-zinc-500 hover:text-white transition-transform duration-200 hover:scale-125 shrink-0"
+                          >
+                            <ExternalLink size={15} />
+                          </a>
                         </div>
                       </div>
-                    </div>
-                  </Reveal>
+                    )}
+                  </GradientCard>
                 ))}
               </div>
             </div>
@@ -1304,52 +1415,25 @@ export default function Portfolio() {
               >
                 <Mail size={14} /> Email
               </a>
-              <span className="group/gb relative inline-block rounded-md p-px overflow-hidden">
-                <span
-                  className="absolute -inset-full opacity-0 group-hover/gb:opacity-100 group-active/gb:opacity-100 transition-opacity duration-500 animate-spin-border pointer-events-none"
-                  style={{
-                    backgroundImage:
-                      "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))",
-                  }}
-                />
-                <a
-                  href="https://github.com/arbazansari7933"
-                  className="relative flex items-center gap-2 px-5 py-2.5 bg-black border border-zinc-700 hover:border-transparent active:border-transparent text-sm hover:-translate-y-0.5 active:-translate-y-0.5 transition-all duration-200 rounded-md"
-                >
-                  <Github size={14} /> GitHub
-                </a>
-              </span>
-              <span className="group/gb relative inline-block rounded-md p-px overflow-hidden">
-                <span
-                  className="absolute -inset-full opacity-0 group-hover/gb:opacity-100 group-active/gb:opacity-100 transition-opacity duration-500 animate-spin-border pointer-events-none"
-                  style={{
-                    backgroundImage:
-                      "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))",
-                  }}
-                />
-                <a
-                  href="https://www.linkedin.com/in/arbazansari7934"
-                  className="relative flex items-center gap-2 px-5 py-2.5 bg-black border border-zinc-700 hover:border-transparent active:border-transparent text-sm hover:-translate-y-0.5 active:-translate-y-0.5 transition-all duration-200 rounded-md"
-                >
-                  <Linkedin size={14} /> LinkedIn
-                </a>
-              </span>
-              <span className="group/gb relative inline-block rounded-md p-px overflow-hidden">
-                <span
-                  className="absolute -inset-full opacity-0 group-hover/gb:opacity-100 group-active/gb:opacity-100 transition-opacity duration-500 animate-spin-border pointer-events-none"
-                  style={{
-                    backgroundImage:
-                      "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))",
-                  }}
-                />
-                <a
-                  href="/api/resume"
-                  download
-                  className="relative flex items-center gap-2 px-5 py-2.5 bg-black border border-zinc-700 hover:border-transparent active:border-transparent text-sm hover:-translate-y-0.5 active:-translate-y-0.5 transition-all duration-200 rounded-md"
-                >
-                  <FileDown size={14} /> Resume
-                </a>
-              </span>
+              <GradientButton
+                href="https://github.com/arbazansari7933"
+                innerClassName="flex items-center gap-2 px-5 py-2.5 text-sm"
+              >
+                <Github size={14} /> GitHub
+              </GradientButton>
+              <GradientButton
+                href="https://www.linkedin.com/in/arbazansari7934"
+                innerClassName="flex items-center gap-2 px-5 py-2.5 text-sm"
+              >
+                <Linkedin size={14} /> LinkedIn
+              </GradientButton>
+              <GradientButton
+                href="/api/resume"
+                download
+                innerClassName="flex items-center gap-2 px-5 py-2.5 text-sm"
+              >
+                <FileDown size={14} /> Resume
+              </GradientButton>
             </div>
           </Reveal>
         </section>
