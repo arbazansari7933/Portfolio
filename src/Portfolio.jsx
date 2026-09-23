@@ -67,6 +67,16 @@ const PROJECTS = [
     stack: ["Docker", "Spring Boot", "Render", "Aiven"],
     metrics: [],
   },
+  {
+    name: "Ejaz Constructions",
+    tag: "UI Project",
+    accent: "rose",
+    github: "https://github.com/arbazansari7933/Constructions-website",
+    live: "https://ejazconstruction1.netlify.app/",
+    desc: "A responsive marketing website UI built with React, Vite, and Tailwind CSS. Component-based, data-driven layout with smooth section transitions and a clean, professional design system built for easy content swaps.",
+    stack: ["React", "Vite", "Tailwind CSS"],
+    metrics: [],
+  },
 ];
 
 const ACCENT = {
@@ -105,6 +115,15 @@ const ACCENT = {
     tagText: "text-amber-400",
     tagBorder: "border-amber-800",
     dot: "bg-amber-400",
+  },
+  rose: {
+    text: "text-rose-400",
+    border: "border-rose-500",
+    bg: "bg-rose-500",
+    tagBg: "bg-rose-950",
+    tagText: "text-rose-400",
+    tagBorder: "border-rose-800",
+    dot: "bg-rose-400",
   },
 };
 
@@ -975,7 +994,7 @@ export default function Portfolio() {
                 href: "https://archive.nptel.ac.in/content/noc/NOC25/SEM2/Ecertificates/106/noc25-cs148/Course/NPTEL25CS148S105320071610380559.pdf",
               },
               {
-                value: 3,
+                value: 4,
                 suffix: "+",
                 label: "Projects deployed",
                 href: "https://github.com/arbazansari7933",
