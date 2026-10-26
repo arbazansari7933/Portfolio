@@ -143,6 +143,14 @@ const GRADIENT_BTN_CLASS =
 const GRADIENT_RING_IMAGE =
   "conic-gradient(rgba(147,51,234,0.9), rgba(20,184,166,0.9), rgba(134,239,172,0.9), rgba(147,51,234,0.9))";
 
+const HEADING_GRADIENT_STYLE = {
+  backgroundImage:
+    "linear-gradient(90deg, rgba(147,51,234,1), rgba(30,58,138,1), rgba(20,184,166,1), rgba(16,185,129,1), rgba(134,239,172,1))",
+  WebkitBackgroundClip: "text",
+  backgroundClip: "text",
+  color: "transparent",
+};
+
 /* ---------- Reveal: scroll-triggered fade+slide-in wrapper ---------- */
 function Reveal({ children, delay = 0, className = "" }) {
   const ref = useRef(null);
@@ -350,17 +358,6 @@ function CountUp({ target, suffix = "", duration = 1200 }) {
       {value}
       {suffix}
     </span>
-  );
-}
-
-/* ---------- SectionAccent: small underline bar that draws in once visible ---------- */
-function SectionAccent({ visible, className = "" }) {
-  return (
-    <span
-      className={`block h-0.5 bg-gradient-to-r from-violet-500 via-teal-400 to-emerald-300 origin-left transition-transform duration-700 ease-out ${
-        visible ? "scale-x-100" : "scale-x-0"
-      } ${className}`}
-    />
   );
 }
 
@@ -815,10 +812,8 @@ export default function Portfolio() {
                     e.preventDefault();
                     scrollToSection(l.href.slice(1));
                   }}
-                  className={`relative transition-colors duration-200 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-px after:bg-emerald-400 after:transition-all after:duration-300 ${
-                    isActive
-                      ? "text-white after:w-full"
-                      : "hover:text-white after:w-0 hover:after:w-full"
+                  className={`relative transition-colors duration-200 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-px after:bg-emerald-400 after:transition-all after:duration-300 hover:bg-[linear-gradient(90deg,rgba(147,51,234,1),rgba(30,58,138,1),rgba(20,184,166,1),rgba(16,185,129,1),rgba(134,239,172,1))] hover:bg-clip-text hover:text-transparent active:bg-[linear-gradient(90deg,rgba(147,51,234,1),rgba(30,58,138,1),rgba(20,184,166,1),rgba(16,185,129,1),rgba(134,239,172,1))] active:bg-clip-text active:text-transparent ${
+                    isActive ? "text-white after:w-full" : "after:w-0 hover:after:w-full"
                   }`}
                 >
                   {l.label}
@@ -875,7 +870,7 @@ export default function Portfolio() {
                   setMobileOpen(false);
                   scrollToSection(l.href.slice(1));
                 }}
-                className="text-sm text-zinc-300 hover:text-white"
+                className="self-start text-sm text-zinc-300 hover:bg-[linear-gradient(90deg,rgba(147,51,234,1),rgba(30,58,138,1),rgba(20,184,166,1),rgba(16,185,129,1),rgba(134,239,172,1))] hover:bg-clip-text hover:text-transparent active:bg-[linear-gradient(90deg,rgba(147,51,234,1),rgba(30,58,138,1),rgba(20,184,166,1),rgba(16,185,129,1),rgba(134,239,172,1))] active:bg-clip-text active:text-transparent"
               >
                 {l.label}
               </a>
@@ -994,7 +989,7 @@ export default function Portfolio() {
                 href: "https://archive.nptel.ac.in/content/noc/NOC25/SEM2/Ecertificates/106/noc25-cs148/Course/NPTEL25CS148S105320071610380559.pdf",
               },
               {
-                value: 4,
+                value: 3,
                 suffix: "+",
                 label: "Projects deployed",
                 href: "https://github.com/arbazansari7933",
@@ -1048,14 +1043,9 @@ export default function Portfolio() {
         {/* PROCESS — numbered steps, Render-style */}
         <section id="process" className="py-14 border-t border-zinc-900">
           <Reveal>
-            {(visible) => (
-              <div className="inline-block mb-10">
-                <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">
-                  Build, ship, maintain.
-                </h2>
-                <SectionAccent visible={visible} className="w-full" />
-              </div>
-            )}
+            <h2 style={HEADING_GRADIENT_STYLE} className="inline-block text-xl sm:text-4xl font-bold tracking-tight mb-10 whitespace-nowrap">
+              Build, ship, maintain.
+            </h2>
           </Reveal>
           <div className="grid sm:grid-cols-3 gap-8">
             {[
@@ -1099,12 +1089,9 @@ export default function Portfolio() {
         {/* SKILLS */}
         <section id="skills" className="py-14 border-t border-zinc-900">
           <Reveal>
-            {(visible) => (
-              <div className="inline-block mb-4">
-                <h2 className="text-xl font-bold mb-2">Skills</h2>
-                <SectionAccent visible={visible} className="w-full" />
-              </div>
-            )}
+            <h2 style={HEADING_GRADIENT_STYLE} className="inline-block text-xl font-bold mb-4">
+              Skills
+            </h2>
           </Reveal>
           <GradientCard
             id="skills"
@@ -1119,12 +1106,9 @@ export default function Portfolio() {
         {/* PROJECTS */}
         <section id="projects" className="py-14 border-t border-zinc-900">
           <Reveal>
-            {(visible) => (
-              <div className="inline-block mb-4">
-                <h2 className="text-xl font-bold mb-2">Projects</h2>
-                <SectionAccent visible={visible} className="w-full" />
-              </div>
-            )}
+            <h2 style={HEADING_GRADIENT_STYLE} className="inline-block text-xl font-bold mb-4">
+              Projects
+            </h2>
           </Reveal>
           <p className="text-sm text-zinc-500 mb-8">
             Real systems solving real problems — most run beyond just localhost.
@@ -1213,12 +1197,9 @@ export default function Portfolio() {
         {/* EXPERIENCE */}
         <section id="experience" className="py-14 border-t border-zinc-900">
           <Reveal>
-            {(visible) => (
-              <div className="inline-block mb-4">
-                <h2 className="text-xl font-bold mb-2">Experience</h2>
-                <SectionAccent visible={visible} className="w-full" />
-              </div>
-            )}
+            <h2 style={HEADING_GRADIENT_STYLE} className="inline-block text-xl font-bold mb-4">
+              Experience
+            </h2>
           </Reveal>
           <div className="flex flex-col gap-6">
             {EXPERIENCE.map((item, i) => {
@@ -1312,12 +1293,9 @@ export default function Portfolio() {
         {/* CERTIFICATIONS & ACHIEVEMENTS */}
         <section id="achievements" className="py-14 border-t border-zinc-900">
           <Reveal>
-            {(visible) => (
-              <div className="inline-block mb-4">
-                <h2 className="text-xl font-bold mb-2">Certifications &amp; Achievements</h2>
-                <SectionAccent visible={visible} className="w-full" />
-              </div>
-            )}
+            <h2 style={HEADING_GRADIENT_STYLE} className="inline-block text-xl font-bold mb-4">
+              Certifications &amp; Achievements
+            </h2>
           </Reveal>
 
           <div className="grid sm:grid-cols-2 gap-6">
@@ -1413,12 +1391,9 @@ export default function Portfolio() {
         {/* CONTACT */}
         <section id="contact" className="py-14 border-t border-zinc-900 pb-20">
           <Reveal>
-            {(visible) => (
-              <div className="inline-block mb-4">
-                <h2 className="text-xl font-bold mb-2">Get in touch</h2>
-                <SectionAccent visible={visible} className="w-full" />
-              </div>
-            )}
+            <h2 style={HEADING_GRADIENT_STYLE} className="inline-block text-xl font-bold mb-4">
+              Get in touch
+            </h2>
           </Reveal>
           <p className="text-sm text-zinc-500 mb-8 max-w-xl">
             Open to full-stack and backend roles, freelance projects, and placement
