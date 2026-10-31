@@ -977,7 +977,7 @@ export default function Portfolio() {
           >
             {[
               {
-                value: 150,
+                value: 200,
                 suffix: "+",
                 label: "LeetCode problems solved",
                 href: "https://leetcode.com/u/arbazansari7933/",
@@ -989,7 +989,7 @@ export default function Portfolio() {
                 href: "https://archive.nptel.ac.in/content/noc/NOC25/SEM2/Ecertificates/106/noc25-cs148/Course/NPTEL25CS148S105320071610380559.pdf",
               },
               {
-                value: 3,
+                value: 4,
                 suffix: "+",
                 label: "Projects deployed",
                 href: "https://github.com/arbazansari7933",
